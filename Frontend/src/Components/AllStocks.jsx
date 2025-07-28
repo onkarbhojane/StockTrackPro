@@ -31,7 +31,7 @@ const AllStocks = () => {
   useEffect(()=>{
     (async ()=>{
       try{
-        const res=await axios.get('http://localhost:3000/service/stockname');
+        const res=await axios.get('https://stocktrackpro-ozwl.onrender.com/service/stockname');
         setSymbols([...res.data.columnValues])
       }catch(error){
         console.log("error in getting stockName Data, ",error);
@@ -47,7 +47,7 @@ const AllStocks = () => {
         const arr=[];
         symbols.map(async(symbol,index)=>{
           arr.push(await axios.get(
-            `http://localhost:3000/service/scrapweb/info?symbol=${symbol}`
+            `https://stocktrackpro-ozwl.onrender.com/service/scrapweb/info?symbol=${symbol}`
           ));
         })
         arr.map((res,index)=>{

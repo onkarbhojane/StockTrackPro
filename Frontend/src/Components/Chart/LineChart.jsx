@@ -74,7 +74,7 @@ const LineChart = () => {
     const fetchStockData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/service/stockprice",
+          "https://stocktrackpro-ozwl.onrender.com/service/stockprice",
           {
             params: { symbol },
             signal: abortController.signal,
@@ -148,7 +148,7 @@ const LineChart = () => {
     const fetchNews = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/service/stocknews?symbol=${symbol}`
+          `https://stocktrackpro-ozwl.onrender.com/service/stocknews?symbol=${symbol}`
         );
         console.log(response.data.news);
         setNews(response.data.news);
@@ -171,7 +171,7 @@ const LineChart = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "http://localhost:3000/api/user/profiledata",
+            "https://stocktrackpro-ozwl.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,

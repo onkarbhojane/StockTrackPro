@@ -43,7 +43,7 @@ const MarketNewsPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/news/translate",
+        "https://stocktrackpro-ozwl.onrender.com/api/news/translate",
         {
           text,
           targetLanguage,
@@ -213,7 +213,7 @@ const MarketNewsPage = () => {
 
       const queryString = queryParams.join("&");
       const response = await axios.get(
-        `http://localhost:3000/api/news/all?${queryString}`
+        `https://stocktrackpro-ozwl.onrender.com/api/news/all?${queryString}`
       );
       setNews(response.data);
     } catch (error) {

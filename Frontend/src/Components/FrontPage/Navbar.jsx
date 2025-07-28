@@ -48,7 +48,7 @@ const Navbar = ({
     setSearch(value);
     try {
       const res = await axios.get(
-        `http://localhost:3000/service/stocksearch?name=${value.toUpperCase()}`
+        `https://stocktrackpro-ozwl.onrender.com/service/stocksearch?name=${value.toUpperCase()}`
       );
       setSearchResults([...res.data]);
     } catch (error) {

@@ -23,9 +23,6 @@ app.use("/api/news", newsRoutes);
 app.use("/api/market-data", MarketDataRouter);
 
 app.use('/stock',router)
-app.get('/',(req,res)=>{
-    console.log("hellor")
-})
 
 
 
