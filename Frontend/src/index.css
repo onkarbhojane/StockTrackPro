@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "tailwindcss";
+
+body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Smooth transitions for interactive elements */
+button, input, a {
+  @apply transition-colors duration-200;
+}

@@ -1,0 +1,89 @@
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* Internet Explorer */
+    scrollbar-width: none; /* Firefox */
+  }
+  .wrapper {
+    position: relative;
+    margin: 1rem;
+  }
+  
+  #progress {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+  }
+  
+  #progress::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 0.5rem;
+    border-radius: 0.75rem;
+    background: #e0e2e4;
+    opacity: 1;
+  }
+  
+  #progress::-moz-range-track {
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    background: #b5d8ff;
+  }
+  
+  #progress::-moz-range-progress {
+    background: #1e3650;
+    height: 1.5rem;
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+  
+  #progress::-ms-track {
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    background: #b5d8ff;
+    color: transparent;
+    border: 0;
+  }
+  
+  #progress::-ms-fill-lower {
+    background: #1e3650;
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+  
+  /* Triangular Thumb */
+  #progress::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 0.8rem;
+    height: 1rem;
+    margin-top: 7px;
+    background: green;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    cursor: pointer;
+  }
+  
+  #progress::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: black;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    cursor: pointer;
+  }
+  
+  #progress::-ms-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: black;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    cursor: pointer;
+  }
+  
+  .visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+  
