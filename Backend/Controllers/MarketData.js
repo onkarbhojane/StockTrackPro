@@ -1,5 +1,5 @@
 import axios from "axios";
-import DailyData from "../models/DailyData.models.js";
+import DailyData from "../Models/DailyData.models.js";
 
 const MarketData = async (req, res) => {
   try {
