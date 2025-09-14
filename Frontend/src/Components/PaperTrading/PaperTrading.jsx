@@ -6,6 +6,18 @@ import PortfolioSummary from './components/PortfolioSummary';
 import TradeHistory from './components/TradeHistory';
 import MarketDataFeed from './components/MarketDataFeed';
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * PaperTrading is a component that displays a simulated trading interface.
+ * It allows users to execute trades, view their portfolio, and view their trade history.
+ * The component also displays a list of available trading strategies, and allows users to activate and deactivate them.
+ * The component uses the MarketDataFeed component to fetch market data in the background, and the TradingViewWidget component to display a trading view.
+ * The component uses the StrategyControls component to display a list of available trading strategies and to allow users to activate and deactivate them.
+ * The component uses the PortfolioSummary component to display a summary of the user's portfolio.
+ * The component uses the TradeHistory component to display a list of the user's trade history.
+ * @returns {JSX.Element} A JSX element representing the PaperTrading component.
+ */
+/*******  a27c5de5-a720-4980-8572-8d586658c3f5  *******/
 const PaperTrading = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [balance, setBalance] = useState(100000);
