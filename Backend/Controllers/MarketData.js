@@ -3,6 +3,7 @@ import DailyData from "../Models/DailyData.models.js";
 
 const MarketData = async (req, res) => {
   try {
+    
     const headers = {
       "User-Agent": "Mozilla/5.0",
       Accept: "*/*",

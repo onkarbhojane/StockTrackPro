@@ -5,6 +5,7 @@ const TransactionSchema = new mongoose.Schema({
   quantity: Number,
   price: Number,
   type: String,
+  Status: String,
   date: { type: Date, default: Date.now }
 });
 
@@ -22,8 +23,8 @@ const UserSchema = new mongoose.Schema({
   ProfileImage: String,
   PhoneNo: { type: String, default: '0' },
   Stocks: [StockSchema],
-  TotalAmount: { type: Number, default: 10000 },
-  WalletAmount: { type: Number, default: 10000 },
+  TotalAmount: { type: Number, default: 100000 },
+  WalletAmount: { type: Number, default: 100000 },
   isVerified: { type: Boolean, default: false },
   Transactions: [TransactionSchema],
   SavedNews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'News' }],
@@ -38,7 +39,7 @@ const UserSchema = new mongoose.Schema({
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
     progress: { type: Number, default: 0 },
     completed: { type: Boolean, default: false }
-  }],
+  }]
 });
 
 const User = mongoose.model('User', UserSchema);

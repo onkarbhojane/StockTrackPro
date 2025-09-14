@@ -11,6 +11,7 @@ import StockPrice from '../Utils/StockPrice.js';
 import Knowledge_Center from '../Controllers/Knowledge_Center.js';
 import stocknews from '../Utils/stocknews.js';
 import stockDashboard from '../Utils/stockDashboard.js';
+import LiveData from '../Controllers/Livestockprice.js';
 const router = express.Router();
 router.get('/', (req, res) => {
   res.status(200).json({message: 'Hello World'});
@@ -29,7 +30,7 @@ router.get('/scrapweb', NewsScraper);
 router.get('/scrapweb/info',CompleteInfo)
 router.get('/stockname', stockname);
 router.get('/stocksearch', stockSearch);
-router.get('/stockprice',StockPrice);
+router.get('/stockprice',LiveData);
 router.get('/stocknews',stocknews);
 router.get('/knowledge_center',Knowledge_Center);
 router.get('/dashboard',stockDashboard)

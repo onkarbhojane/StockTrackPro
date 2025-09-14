@@ -48,7 +48,7 @@ const Navbar = ({
     setSearch(value);
     try {
       const res = await axios.get(
-        `https://stocktrackpro-ozwl.onrender.com/service/stocksearch?name=${value.toUpperCase()}`
+        `http://localhost:8080/service/stocksearch?name=${value.toUpperCase()}`
       );
       setSearchResults([...res.data]);
     } catch (error) {
@@ -196,6 +196,16 @@ const Navbar = ({
                     onClick={() => navigate("/news")}
                   >
                     Market News
+                  </button>
+                  <button
+                    className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
+                    onClick={() =>{
+                      if(state) {
+                        navigate("/AlgoTrade")
+                      }else handleModal("auth", true)
+                    }}
+                  >
+                    Algo Trades
                   </button>
                   <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"

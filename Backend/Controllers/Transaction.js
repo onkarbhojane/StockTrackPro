@@ -62,6 +62,20 @@ const StockTransaction = async (req, res) => {
           totalInvested: transaction.estimatedCost,
         });
       }
+    }else{
+      // SELL transaction
+      const existingStock = user.Stocks
+        .find((stock) => stock.symbol === transaction.Symbol);
+      if (!existingStock || existingStock.quantity < transaction.Quantity) {
+        return res.status(400).json({ message: "Insufficient stocks" });
+      }
+      // Update wallet
+      user.WalletAmount += transaction.estimatedCost;
+      // Update stocks
+      existingStock.quantity -= transaction.Quantity;
+      existingStock.totalInvested -= transaction.estimatedCost;
+      existingStock.avgPrice =
+        existingStock.totalInvested / existingStock.quantity;
     }
 
     // Record transaction

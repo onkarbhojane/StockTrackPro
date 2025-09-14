@@ -24,7 +24,7 @@ const Profile = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://stocktrackpro-ozwl.onrender.com/api/user/profiledata",
+            "http://localhost:8080/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -367,7 +367,7 @@ const Profile = () => {
           {activeTab === 'history' && (
             <div>
               <h2 className="text-xl font-semibold mb-4 text-black">Paper Trading History</h2>
-              {user.PaperTradingStats && Object.keys(user.PaperTradingStats).length > 0 ? (
+              {user.Transactions && Object.keys(user.Transactions).length > 0 ? (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-gray-50 p-4 rounded-lg">

@@ -1,26 +1,12 @@
-import mongoose from 'mongoose';
-
-const dailyDataSchema = new mongoose.Schema({
-    Name: {
-        type: String,
-        enum: ['gainers', 'losers'],
-        required: true
-    },
-    data: [{
-        Symbol: {
-            type: String,
-            required: true
-        },
-        Price: {
-            type: Number,
-            required: true
-        },
-        ProfitLoss: {
-            type: Number,
-            required: true
-        },
-    }]
+import mongoose from "mongoose";
+const DailyDataSchema = new mongoose.Schema({
+  Symbol: { type: String, required: true },
+  Date: { type: Date, required: true },
+  Open: Number,
+  High: Number,
+  Low: Number,
+  Close: Number,
+  Volume: Number,
 });
-
-const DailyData = mongoose.model('DailyData', dailyDataSchema);
+const DailyData = mongoose.model("DailyData", DailyDataSchema);
 export default DailyData;

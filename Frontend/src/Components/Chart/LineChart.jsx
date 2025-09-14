@@ -19,6 +19,7 @@ import Navbar from "../FrontPage/Navbar";
 import { useDispatch, useSelector } from "react-redux";
 import { AddStock, InitTransaction } from "../../Redux/Features/StocksCart";
 import { login, logout } from "../../Redux/Features/AuthSlice";
+import { is } from "date-fns/locale";
 
 ChartJS.register(
   CategoryScale,
@@ -57,7 +58,9 @@ const LineChart = () => {
   const navigate = useNavigate();
   const stock = useSelector((state) => state.StockCart.stockList);
   const refb = useRef(null);
-
+  const [chartInterval, setChartInterval] = useState("Daily");
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [totalQts, setTotalQts] = useState(0);
   // Reset historical data and symbol when symbol changes
   useEffect(() => {
     setStockData((prev) => ({
@@ -70,18 +73,17 @@ const LineChart = () => {
   useEffect(() => {
     const abortController = new AbortController();
 
-    console.log(new Date().getDay(), "qqqqqqqqqqqqq");
     const fetchStockData = async () => {
       try {
+        console.log(symbol + " " + chartInterval);
         const response = await axios.get(
-          "https://stocktrackpro-ozwl.onrender.com/service/stockprice",
+          "http://localhost:8080/service/stockprice",
           {
-            params: { symbol },
+            params: { symbol, type: chartInterval },
             signal: abortController.signal,
           }
         );
         const data = response.data;
-
         const parseCurrency = (str) => parseFloat(str.replace(/[^0-9.]/g, ""));
         const stockPrice = parseCurrency(data.stockPrice);
         const prevClose = parseCurrency(data.prevClose);
@@ -94,6 +96,7 @@ const LineChart = () => {
         const [yearLow, yearHigh] = data.yearRange
           .split(" - ")
           .map(parseCurrency);
+        console.log(prevClose + " data");
 
         setStockData((prev) => {
           const newHistorical = [
@@ -122,14 +125,16 @@ const LineChart = () => {
         }
       }
     };
+    const now = new Date();
     let intervalId = null;
-    const day = new Date();
-    if (
-      day.getDay() >= 0 &&
-      day.getDay() <= 5 &&
-      day.getHours() >= 9 &&
-      day.getHours() <= 15
-    ) {
+    const isMarketTime =
+      now.getDay() >= 1 &&
+      now.getDay() <= 5 && // Monday to Friday
+      ((now.getHours() === 9 && now.getMinutes() >= 15) || // From 9:15 AM
+        (now.getHours() > 9 && now.getHours() < 15) || // 10 AM - 2:59 PM
+        (now.getHours() === 15 && now.getMinutes() <= 30)); // Until 3:30 PM
+
+    if (isMarketTime) {
       intervalId = setInterval(fetchStockData, 5000);
     } else {
       fetchStockData();
@@ -139,7 +144,7 @@ const LineChart = () => {
       abortController.abort();
       clearInterval(intervalId);
     };
-  }, [symbol]);
+  }, [symbol, chartInterval]);
 
   const [news, setNews] = useState([]);
   const [error, setError] = useState(null);
@@ -148,7 +153,7 @@ const LineChart = () => {
     const fetchNews = async () => {
       try {
         const response = await axios.get(
-          `https://stocktrackpro-ozwl.onrender.com/service/stocknews?symbol=${symbol}`
+          `http://localhost:8080/service/stocknews?symbol=${symbol}`
         );
         console.log(response.data.news);
         setNews(response.data.news);
@@ -158,6 +163,11 @@ const LineChart = () => {
         setLoading(false);
       }
     };
+    const stocksList = user.Stocks.find(
+      (s) => s.symbol === stockData.symbol && s.quantity > 0
+    );
+    setIsPurchased(stocksList ? true : false);
+    setTotalQts(stocksList?.quantity);
 
     fetchNews();
   }, [symbol]);
@@ -171,7 +181,7 @@ const LineChart = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://stocktrackpro-ozwl.onrender.com/api/user/profiledata",
+            "http://localhost:8080/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -233,16 +243,27 @@ const LineChart = () => {
           type: "BUY",
         })
       );
-      navigate("/buy/verification");
     }
   };
 
   const handleSell = () => {
-    console.log("Sell order submitted:", {
-      quantity,
-      price: price || stockData.price,
-      total: estimatedCost,
-    });
+    const stocksList = user.Stocks.find(
+      (s) => s.symbol === stockData.symbol && s.quantity > 0
+    );
+    if (!stocksList || stocksList.quantity < quantity || quantity <= 0) return;
+    const calculatedPrice = price || stockData.price;
+    const calculatedQuantity = parseFloat(quantity) || 0;
+    const estimatedCost = calculatedQuantity * calculatedPrice;
+
+    dispatch(
+      InitTransaction({
+        Symbol: stockData.symbol,
+        Quantity: quantity,
+        avgPrice: stockData.price,
+        estimatedCost: estimatedCost,
+        type: "SELL",
+      })
+    );
   };
 
   const chartData = {
@@ -320,7 +341,7 @@ const LineChart = () => {
 
   return (
     <>
-      <Navbar hide={false} />
+      <Navbar />
       <div className=" bg-gray-50 pt-20 space-y-4">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
@@ -333,7 +354,7 @@ const LineChart = () => {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-gray-900">
-                  ₹{stockData.price.toFixed(2)}
+                  ₹{stockData.price?.toFixed(2)}
                 </div>
                 <div
                   className={`text-sm font-medium ${
@@ -379,6 +400,37 @@ const LineChart = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center mb-6">
+                {/* Left Button */}
+                <div
+                  onClick={() => navigate("/AlgoTrade")}
+                  className="px-6 py-2 rounded-2xl font-medium shadow-sm border border-gray-200 bg-white 
+               text-gray-700 hover:bg-gradient-to-r hover:from-indigo-100 hover:to-purple-100 
+               hover:text-indigo-700 cursor-pointer transition-all duration-300"
+                >
+                  Try Algos?
+                </div>
+
+                {/* Interval Selector */}
+                <div className="flex gap-3 text-sm">
+                  {["Daily", "Weekly", "Yearly"].map((label) => (
+                    <div
+                      key={label}
+                      onClick={() => setChartInterval(label)}
+                      className={`px-6 py-2 rounded-2xl font-medium shadow-sm border border-gray-200 bg-white 
+          cursor-pointer transition-all duration-300
+          ${
+            chartInterval === label
+              ? "bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700"
+              : "text-gray-700 hover:bg-gradient-to-r hover:from-indigo-100 hover:to-purple-100 hover:text-indigo-700"
+          }`}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="h-96">
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
@@ -452,7 +504,9 @@ const LineChart = () => {
                             : "green";
                       }
                     }}
-                    placeholder="Enter shares"
+                    placeholder={`Available: ${Math.floor(
+                      user.WalletAmount / stockData.price.toFixed(2)
+                    )}`}
                   />
                 </div>
 
@@ -460,7 +514,7 @@ const LineChart = () => {
                   <div className="flex justify-between text-sm text-gray-700">
                     <span className="font-medium">Available Cash</span>
                     <span className="font-semibold">
-                      ₹{user.WalletAmount.toLocaleString()}
+                      ₹{user.WalletAmount?.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-700">
@@ -473,6 +527,14 @@ const LineChart = () => {
                       })}
                     </span>
                   </div>
+                  {isPurchased && (
+                    <div className="flex justify-between text-sm text-gray-700">
+                      <span className="font-medium">Current Quantities</span>
+                      <span className="font-semibold">
+                        You will sell {quantity} out of {totalQts} shares
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

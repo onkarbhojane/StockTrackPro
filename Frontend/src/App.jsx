@@ -15,12 +15,16 @@ import Main from './Components/Knowledge Center/Main.jsx'
 import StockNews from './Demo.jsx'
 import  MarketNewsPage   from './Components/MarketNews/MarketNews.jsx'
 import SocialShare from './Components/Common/Share.jsx'
+import AlgoTrading from './Components/AlgoTrading/AlgoTrade.jsx'
+import PaperTrading from './Components/PaperTrading/PaperTrading.jsx'
+import TradingChartPro from './Components/AlgoTrading/Charts/TradingChartPro.jsx'
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route index path='/' element={<Frontpage/>}/>
         <Route index path='/news' element={<MarketNewsPage/>}/>
+        <Route index path='/AlgoTrade' element={<AlgoTrading/>}/>
         <Route path='/stock/:symbol' element={<LineChart/>}/>
         <Route path='/user/profile' element={<Profile/>}/>
         <Route path='/dashboard' element={<Dashboard/>}/>
@@ -31,7 +35,9 @@ function App() {
         <Route path='/buy/verification' element={<OTP/>}/>
         <Route path ='/stock/verification/done' element={<StockTransaction/>}/>
         <Route path='/knowledge_center' element={<Main/>}/>
-        <Route path='*' element={<h1>Page is in the Development state</h1>}/>
+        <Route path='/AlgoTrade/candlestick' element={<TradingChartPro/>}/>
+        <Route path='/paper' element={<PaperTrading/>}/>
+        {/* <Route path='*' element={<h1>Page is in the Development state</h1>}/> */}
         <Route path='/demo' element={<SocialShare url={'https://www.example.com'} title={'Example Title'}/>}/>
       </Routes>
     </BrowserRouter>
