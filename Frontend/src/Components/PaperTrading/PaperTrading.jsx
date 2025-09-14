@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import TradingViewWidget from './components/TradingViewWidget';
-import StrategyControls from './components/StrategyControls';
-import PortfolioSummary from './components/PortfolioSummary';
-import TradeHistory from './components/TradeHistory';
-import MarketDataFeed from './components/MarketDataFeed';
+import TradingViewWidget from './Components/TradingViewWidget';
+import StrategyControls from './Components/StrategyControls';
+import PortfolioSummary from './Components/PortfolioSummary';
+import TradeHistory from './Components/TradeHistory';
+import MarketDataFeed from './Components/MarketDataFeed';
 
 const PaperTrading = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
