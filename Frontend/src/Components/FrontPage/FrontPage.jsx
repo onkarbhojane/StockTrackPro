@@ -20,7 +20,7 @@ const FrontPage = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://ai-script-writter-website.onrender.com/api/user/profiledata",
+            "https://stocktrackpro-1.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,

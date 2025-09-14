@@ -76,7 +76,7 @@ const Dashboard = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://ai-script-writter-website.onrender.com/api/user/profiledata",
+            "https://stocktrackpro-1.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -110,13 +110,13 @@ const Dashboard = () => {
       try {
         // Fetch market indices
         const indicesResponse = await axios.get(
-          "https://ai-script-writter-website.onrender.com/service/market-indices"
+          "https://stocktrackpro-1.onrender.com/service/market-indices"
         );
         setIndices(indicesResponse.data);
 
         // Fetch chart data
         const chartResponse = await axios.get(
-          "https://ai-script-writter-website.onrender.com/service/market-chart"
+          "https://stocktrackpro-1.onrender.com/service/market-chart"
         );
         setMarketData({
           labels: chartResponse.data.labels,

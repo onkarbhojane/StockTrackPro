@@ -77,7 +77,7 @@ const LineChart = () => {
       try {
         console.log(symbol + " " + chartInterval);
         const response = await axios.get(
-          "https://ai-script-writter-website.onrender.com/service/stockprice",
+          "https://stocktrackpro-1.onrender.com/service/stockprice",
           {
             params: { symbol, type: chartInterval },
             signal: abortController.signal,
@@ -153,7 +153,7 @@ const LineChart = () => {
     const fetchNews = async () => {
       try {
         const response = await axios.get(
-          `https://ai-script-writter-website.onrender.com/service/stocknews?symbol=${symbol}`
+          `https://stocktrackpro-1.onrender.com/service/stocknews?symbol=${symbol}`
         );
         console.log(response.data.news);
         setNews(response.data.news);
@@ -181,7 +181,7 @@ const LineChart = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://ai-script-writter-website.onrender.com/api/user/profiledata",
+            "https://stocktrackpro-1.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
