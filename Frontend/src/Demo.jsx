@@ -10,7 +10,7 @@ const StockNews = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/service/stockprice?symbol=IREDA"
+          "https://ai-script-writter-website.onrender.com/service/stockprice?symbol=IREDA"
         );
         console.log(response.data);
         // You might want to update the state with stockPrice here

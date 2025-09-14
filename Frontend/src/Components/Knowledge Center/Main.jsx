@@ -35,7 +35,7 @@ const Main = () => {
       try {
         const encodedCategory = encodeURIComponent(activeCategory);
         const response = await axios.get(
-          `http://localhost:8080/service/knowledge_center?search=${encodedCategory}`
+          `https://ai-script-writter-website.onrender.com/service/knowledge_center?search=${encodedCategory}`
         );
         setContent(response.data.videos || []);
         setError(null);

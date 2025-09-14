@@ -76,7 +76,7 @@ const Dashboard = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "http://localhost:8080/api/user/profiledata",
+            "https://ai-script-writter-website.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -110,13 +110,13 @@ const Dashboard = () => {
       try {
         // Fetch market indices
         const indicesResponse = await axios.get(
-          "http://localhost:8080/service/market-indices"
+          "https://ai-script-writter-website.onrender.com/service/market-indices"
         );
         setIndices(indicesResponse.data);
 
         // Fetch chart data
         const chartResponse = await axios.get(
-          "http://localhost:8080/service/market-chart"
+          "https://ai-script-writter-website.onrender.com/service/market-chart"
         );
         setMarketData({
           labels: chartResponse.data.labels,

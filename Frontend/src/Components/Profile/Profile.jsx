@@ -24,7 +24,7 @@ const Profile = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "http://localhost:8080/api/user/profiledata",
+            "https://ai-script-writter-website.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,

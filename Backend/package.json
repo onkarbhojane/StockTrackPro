@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "build": "echo Build step complete"
   },
   "author": "Onkar Bhojane",
   "license": "ISC",
