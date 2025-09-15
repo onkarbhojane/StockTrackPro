@@ -101,7 +101,7 @@ const Modal = ({
   const Login = async () => {
     try {
       const res = await axios.post(
-        "https://stocktrackpro-1.onrender.com/api/user/login",
+        "http://localhost:8080/api/user/login",
         userData
       );
 
@@ -251,7 +251,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
 
   const sendOTP = async () => {
     try {
-      const res = await axios.post("https://stocktrackpro-1.onrender.com/api/user/OTPVerify", {
+      const res = await axios.post("http://localhost:8080/api/user/OTPVerify", {
         email: userData.email,
         OTP: otp,
       });
@@ -267,7 +267,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
   const registerUser = async () => {
     try {
       const res = await axios.post(
-        "https://stocktrackpro-1.onrender.com/api/user/register",
+        "http://localhost:8080/api/user/register",
         userData
       );
       if (res.status === 200) {

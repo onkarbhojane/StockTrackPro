@@ -89,7 +89,7 @@ const LineChart = () => {
       try {
         console.log(symbol + " " + chartInterval);
         const response = await axios.get(
-          "https://stocktrackpro-1.onrender.com/service/stockprice",
+          "http://localhost:8080/service/stockprice",
           {
             params: { symbol, type: chartInterval },
             signal: abortController.signal,
@@ -169,7 +169,7 @@ const LineChart = () => {
     const fetchNews = async () => {
       try {
         const response = await axios.get(
-          `https://stocktrackpro-1.onrender.com/service/stocknews?symbol=${symbol}`
+          `http://localhost:8080/service/stocknews?symbol=${symbol}`
         );
         console.log(response.data.news);
         setNews(response.data.news || []);
@@ -197,7 +197,7 @@ const LineChart = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://stocktrackpro-1.onrender.com/api/user/profiledata",
+            "http://localhost:8080/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -259,6 +259,7 @@ const LineChart = () => {
           type: "BUY",
         })
       );
+      navigate("/stock/verification/done");
     }
   };
 
@@ -280,6 +281,7 @@ const LineChart = () => {
         type: "SELL",
       })
     );
+    navigate("/stock/verification/done");
   };
 
   // Function to check if a time is within market hours (9:15 AM to 3:30 PM)

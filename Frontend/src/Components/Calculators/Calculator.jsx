@@ -22,7 +22,7 @@ const Calculator = () => {
     
         if (cookieToken) {
           const response = await axios.get(
-            'https://stocktrackpro-1.onrender.com/api/user/profiledata', 
+            'http://localhost:8080/api/user/profiledata', 
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,

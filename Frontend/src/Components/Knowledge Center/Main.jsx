@@ -35,7 +35,7 @@ const Main = () => {
       try {
         const encodedCategory = encodeURIComponent(activeCategory);
         const response = await axios.get(
-          `https://stocktrackpro-1.onrender.com/service/knowledge_center?search=${encodedCategory}`
+          `http://localhost:8080/service/knowledge_center?search=${encodedCategory}`
         );
         setContent(response.data.videos || []);
         setError(null);
