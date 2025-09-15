@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import { networkInterfaces } from "os";
 import { TOTP } from "totp-generator";
 import mongoose from "mongoose";
-import MarketData from "../Models/MarketData.models";
+import MarketData from "../Models/MarketData.models.js";
 import DailyData from "../Models/DailyData.models.js";
 
 /* -------------------- helpers -------------------- */
@@ -170,6 +170,7 @@ function startWebSocket({ jwtToken, feedToken, clientcode, apiKey }) {
   ws.on("error", (err) => console.error("❌ WebSocket error:", err?.message));
 }
 
+console.log("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
 /* -------------------- save loop (1 sec) -------------------- */
 setInterval(async () => {
   const now = Date.now();

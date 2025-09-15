@@ -7,7 +7,8 @@ import './Controllers/Auth.js'
 import './cron/marketNewsJob.js';
 import newsRoutes from "./Routes/News.routes.js"
 import MarketDataRouter from "./Routes/MarketData.routes.js";
-// import './services/LiveData.js'
+// import './'
+import './services/LiveData.js'
 conn();
 dotenv.config();
 const app = express();

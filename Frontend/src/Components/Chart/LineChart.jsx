@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -19,7 +19,6 @@ import Navbar from "../FrontPage/Navbar";
 import { useDispatch, useSelector } from "react-redux";
 import { AddStock, InitTransaction } from "../../Redux/Features/StocksCart";
 import { login, logout } from "../../Redux/Features/AuthSlice";
-import { is } from "date-fns/locale";
 
 ChartJS.register(
   CategoryScale,
@@ -61,6 +60,19 @@ const LineChart = () => {
   const [chartInterval, setChartInterval] = useState("Daily");
   const [isPurchased, setIsPurchased] = useState(false);
   const [totalQts, setTotalQts] = useState(0);
+  const [news, setNews] = useState([]);
+  const [error, setError] = useState(null);
+
+  // Process historical data from backend
+  const processHistoricalData = useCallback((dataArray) => {
+    if (!dataArray || dataArray.length === 0) return [];
+    
+    return dataArray.map(item => ({
+      date: new Date(item.Date),
+      close: item.Close
+    }));
+  }, []);
+
   // Reset historical data and symbol when symbol changes
   useEffect(() => {
     setStockData((prev) => ({
@@ -83,58 +95,65 @@ const LineChart = () => {
             signal: abortController.signal,
           }
         );
-        const data = response.data;
-        const parseCurrency = (str) => parseFloat(str.replace(/[^0-9.]/g, ""));
-        const stockPrice = parseCurrency(data.stockPrice);
-        const prevClose = parseCurrency(data.prevClose);
+        console.log(response.data, "response data");
+
+        // Handle both single object and array responses
+        let dataArray = Array.isArray(response.data) ? response.data : [response.data];
+        
+        if (dataArray.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // Process the historical data
+        const historicalData = processHistoricalData(dataArray);
+        
+        // Get the latest data point
+        const latestData = dataArray[dataArray.length - 1];
+        const firstData = dataArray[0];
+        
+        const stockPrice = latestData.Close;
+        const prevClose = firstData.Open;
         const change = stockPrice - prevClose;
         const changePercent = (change / prevClose) * 100;
 
-        const [todayLow, todayHigh] = data.todayRange
-          .split(" - ")
-          .map(parseCurrency);
-        const [yearLow, yearHigh] = data.yearRange
-          .split(" - ")
-          .map(parseCurrency);
-        console.log(prevClose + " data");
-
-        setStockData((prev) => {
-          const newHistorical = [
-            ...prev.historical,
-            { date: new Date(), close: stockPrice },
-          ];
-          if (newHistorical.length > 50) newHistorical.shift();
-
-          return {
-            ...prev,
-            symbol: symbol,
-            price: stockPrice,
-            change: change,
-            changePercent: changePercent,
-            high: todayHigh,
-            low: todayLow,
-            marketCap: data.marketCap,
-            peRatio: data.peRatio,
-            historical: newHistorical,
-          };
-        });
+        // Calculate high and low from the entire dataset
+        const highs = dataArray.map(item => item.High);
+        const lows = dataArray.map(item => item.Low);
+        const todayHigh = Math.max(...highs);
+        const todayLow = Math.min(...lows);
+        
+        setStockData((prev) => ({
+          ...prev,
+          symbol: symbol,
+          price: stockPrice,
+          change,
+          changePercent,
+          high: todayHigh,
+          low: todayLow,
+          marketCap: latestData.marketCap ?? prev.marketCap,
+          peRatio: latestData.peRatio ?? prev.peRatio,
+          historical: historicalData,
+        }));
         setLoading(false);
       } catch (error) {
         if (!abortController.signal.aborted) {
           console.error("Error fetching stock data:", error);
+          setLoading(false);
         }
       }
     };
+
     const now = new Date();
     let intervalId = null;
     const isMarketTime =
       now.getDay() >= 1 &&
-      now.getDay() <= 5 && // Monday to Friday
-      ((now.getHours() === 9 && now.getMinutes() >= 15) || // From 9:15 AM
-        (now.getHours() > 9 && now.getHours() < 15) || // 10 AM - 2:59 PM
-        (now.getHours() === 15 && now.getMinutes() <= 30)); // Until 3:30 PM
+      now.getDay() <= 5 &&
+      ((now.getHours() === 9 && now.getMinutes() >= 15) ||
+        (now.getHours() > 9 && now.getHours() < 15) ||
+        (now.getHours() === 15 && now.getMinutes() <= 30));
 
-    if (isMarketTime) {
+    if (chartInterval === "Daily" && isMarketTime) {
       intervalId = setInterval(fetchStockData, 5000);
     } else {
       fetchStockData();
@@ -144,10 +163,7 @@ const LineChart = () => {
       abortController.abort();
       clearInterval(intervalId);
     };
-  }, [symbol, chartInterval]);
-
-  const [news, setNews] = useState([]);
-  const [error, setError] = useState(null);
+  }, [symbol, chartInterval, processHistoricalData]);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -156,21 +172,21 @@ const LineChart = () => {
           `https://stocktrackpro-1.onrender.com/service/stocknews?symbol=${symbol}`
         );
         console.log(response.data.news);
-        setNews(response.data.news);
-        setLoading(false);
+        setNews(response.data.news || []);
       } catch (err) {
         setError(err.message);
-        setLoading(false);
       }
     };
-    const stocksList = user.Stocks.find(
+    
+    const stocksList = user.Stocks?.find(
       (s) => s.symbol === stockData.symbol && s.quantity > 0
     );
     setIsPurchased(stocksList ? true : false);
-    setTotalQts(stocksList?.quantity);
+    setTotalQts(stocksList?.quantity || 0);
 
     fetchNews();
-  }, [symbol]);
+  }, [symbol, user, stockData.symbol]);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -247,7 +263,7 @@ const LineChart = () => {
   };
 
   const handleSell = () => {
-    const stocksList = user.Stocks.find(
+    const stocksList = user.Stocks?.find(
       (s) => s.symbol === stockData.symbol && s.quantity > 0
     );
     if (!stocksList || stocksList.quantity < quantity || quantity <= 0) return;
@@ -266,6 +282,54 @@ const LineChart = () => {
     );
   };
 
+  // Function to check if a time is within market hours (9:15 AM to 3:30 PM)
+  const isMarketTime = (date) => {
+    const hour = date.getHours();
+    const minutes = date.getMinutes();
+    
+    // Before market opens
+    if (hour < 9 || (hour === 9 && minutes < 15)) return false;
+    
+    // After market closes
+    if (hour > 15 || (hour === 15 && minutes > 30)) return false;
+    
+    return true;
+  };
+
+  // Generate background shading for non-trading hours
+  const getChartBackground = (chart) => {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return null;
+    
+    const { left, right } = chartArea;
+    const xScale = scales.x;
+    
+    // Create gradient for background
+    const gradient = ctx.createLinearGradient(left, 0, right, 0);
+    
+    // Define market open and close times for today
+    const now = new Date();
+    const marketOpen = new Date(now);
+    marketOpen.setHours(9, 15, 0, 0);
+    
+    const marketClose = new Date(now);
+    marketClose.setHours(15, 30, 0, 0);
+    
+    // Calculate positions for market open and close
+    const openPos = (xScale.getPixelForValue(marketOpen) - left) / (right - left);
+    const closePos = (xScale.getPixelForValue(marketClose) - left) / (right - left);
+    
+    // Add color stops for pre-market, market hours, and post-market
+    gradient.addColorStop(0, '#f5f5f5'); // Pre-market
+    gradient.addColorStop(openPos - 0.001, '#f5f5f5'); // End of pre-market
+    gradient.addColorStop(openPos, '#ffffff'); // Market open
+    gradient.addColorStop(closePos, '#ffffff'); // Market close
+    gradient.addColorStop(closePos + 0.001, '#f5f5f5'); // Start of post-market
+    gradient.addColorStop(1, '#f5f5f5'); // Post-market
+    
+    return gradient;
+  };
+
   const chartData = {
     datasets: [
       {
@@ -276,6 +340,7 @@ const LineChart = () => {
         })),
         borderColor: stockData.change >= 0 ? "#16a34a" : "#dc2626",
         backgroundColor: (context) => {
+          if (!context.chart.ctx) return;
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 400);
           gradient.addColorStop(
@@ -288,6 +353,13 @@ const LineChart = () => {
         tension: 0.1,
         fill: true,
         pointRadius: 0,
+        borderWidth: 2,
+        segment: {
+          borderColor: ctx => {
+            const point = ctx.p0.parsed;
+            return point.y >= (ctx.p1?.parsed.y || point.y) ? "#16a34a" : "#dc2626";
+          },
+        },
       },
     ],
   };
@@ -319,22 +391,43 @@ const LineChart = () => {
       x: {
         type: "time",
         time: {
-          unit: "minute",
-          tooltipFormat: "HH:mm:ss",
+          unit: chartInterval === "Daily" ? "hour" : 
+                chartInterval === "Weekly" ? "day" : "month",
+          tooltipFormat: "MMM dd, yyyy HH:mm",
           displayFormats: {
-            minute: "HH:mm",
-          },
+            hour: "HH:mm",
+            day: "MMM dd",
+            month: "MMM yyyy"
+          }
         },
-        grid: { display: false },
+        grid: { 
+          display: true,
+          color: (context) => {
+            const value = context.tick.value;
+            return isMarketTime(new Date(value)) ? "#e5e7eb" : "transparent";
+          }
+        },
+        ticks: {
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 8,
+          callback: (value) => {
+            const date = new Date(value);
+            return isMarketTime(date) ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+          }
+        }
       },
       y: {
         grid: { color: "#e5e7eb" },
-        ticks: { callback: (value) => `₹${value}` },
+        ticks: { 
+          callback: (value) => `₹${value}`,
+          maxTicksLimit: 6
+        },
       },
     },
     animation: {
       duration: 1000,
-      easing: "linear",
+      easing: "easeOutQuart",
     },
     interaction: { mode: "nearest", intersect: false },
   };
@@ -342,7 +435,7 @@ const LineChart = () => {
   return (
     <>
       <Navbar />
-      <div className=" bg-gray-50 pt-20 space-y-4">
+      <div className="bg-gray-50 pt-20 space-y-4">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -354,7 +447,7 @@ const LineChart = () => {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-gray-900">
-                  ₹{stockData.price?.toFixed(2)}
+                  ₹{stockData.price?.toFixed(2) || "0.00"}
                 </div>
                 <div
                   className={`text-sm font-medium ${
@@ -364,8 +457,8 @@ const LineChart = () => {
                   }-100 px-2 py-1 rounded-full inline-block mt-1`}
                 >
                   {stockData.change >= 0 ? "+" : "-"}₹
-                  {Math.abs(stockData.change).toFixed(2)} (
-                  {Math.abs(stockData.changePercent).toFixed(2)}%)
+                  {Math.abs(stockData.change || 0).toFixed(2)} (
+                  {Math.abs(stockData.changePercent || 0).toFixed(2)}%)
                 </div>
               </div>
             </div>
@@ -380,13 +473,13 @@ const LineChart = () => {
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-600 mb-1">Today's High</div>
                 <div className="font-semibold text-gray-800">
-                  ₹{stockData.high?.toFixed(2)}
+                  ₹{stockData.high?.toFixed(2) || "0.00"}
                 </div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-600 mb-1">Today's Low</div>
                 <div className="font-semibold text-gray-800">
-                  ₹{stockData.low?.toFixed(2)}
+                  ₹{stockData.low?.toFixed(2) || "0.00"}
                 </div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
@@ -401,7 +494,6 @@ const LineChart = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
               <div className="flex justify-between items-center mb-6">
-                {/* Left Button */}
                 <div
                   onClick={() => navigate("/AlgoTrade")}
                   className="px-6 py-2 rounded-2xl font-medium shadow-sm border border-gray-200 bg-white 
@@ -411,7 +503,6 @@ const LineChart = () => {
                   Try Algos?
                 </div>
 
-                {/* Interval Selector */}
                 <div className="flex gap-3 text-sm">
                   {["Daily", "Weekly", "Yearly"].map((label) => (
                     <div
@@ -431,18 +522,27 @@ const LineChart = () => {
                 </div>
               </div>
 
-              <div className="h-96">
+              <div className="h-96 relative">
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
                   </div>
+                ) : stockData.historical.length > 0 ? (
+                  <>
+                    <Line
+                      key={symbol + chartInterval}
+                      ref={chartRef}
+                      data={chartData}
+                      options={chartOptions}
+                    />
+                    <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-gray-600 shadow-sm">
+                      Market Hours: 9:15 AM - 3:30 PM
+                    </div>
+                  </>
                 ) : (
-                  <Line
-                    key={symbol}
-                    ref={chartRef}
-                    data={chartData}
-                    options={chartOptions}
-                  />
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    No historical data available
+                  </div>
                 )}
               </div>
             </div>
@@ -500,12 +600,12 @@ const LineChart = () => {
                         refb.current.style.backgroundColor =
                           user.WalletAmount <
                           e.target.value * (price || stockData.price)
-                            ? "#ACE1AF"
-                            : "green";
+                            ? "#ef4444"
+                            : "#16a34a";
                       }
                     }}
                     placeholder={`Available: ${Math.floor(
-                      user.WalletAmount / stockData.price.toFixed(2)
+                      user.WalletAmount / (stockData.price || 1)
                     )}`}
                   />
                 </div>
@@ -514,7 +614,7 @@ const LineChart = () => {
                   <div className="flex justify-between text-sm text-gray-700">
                     <span className="font-medium">Available Cash</span>
                     <span className="font-semibold">
-                      ₹{user.WalletAmount?.toLocaleString()}
+                      ₹{user.WalletAmount?.toLocaleString() || "0"}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-700">
@@ -541,13 +641,15 @@ const LineChart = () => {
                   <button
                     ref={refb}
                     onClick={handleBuy}
-                    className="w-full py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    disabled={user.WalletAmount < estimatedCost || estimatedCost <= 0}
+                    className="w-full py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Buy {stockData.symbol}
                   </button>
                   <button
                     onClick={handleSell}
-                    className="w-full py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    disabled={!isPurchased || totalQts < quantity || quantity <= 0}
+                    className="w-full py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Sell {stockData.symbol}
                   </button>
@@ -561,13 +663,13 @@ const LineChart = () => {
             </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">
             Latest Stock News
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {news.map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {news.length > 0 ? news.map((item, index) => (
               <div
                 key={index}
                 className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200 border border-gray-100"
@@ -579,7 +681,7 @@ const LineChart = () => {
                   className="block group"
                 >
                   <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors mb-2 whitespace-pre-line">
-                    {item.title.replace(/\n/g, " ")}
+                    {item.title?.replace(/\n/g, " ")}
                   </h3>
                 </a>
 
@@ -590,14 +692,12 @@ const LineChart = () => {
                   <span className="text-gray-400">{item.time}</span>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center p-6 text-gray-500 col-span-3">
+                No news available for {symbol}
+              </div>
+            )}
           </div>
-
-          {news.length === 0 && (
-            <div className="text-center p-6 text-gray-500">
-              No news available
-            </div>
-          )}
         </div>
       </div>
       <div className="h-10 bg-white"></div>
@@ -672,7 +772,7 @@ const LineChart = () => {
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.040 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
                   </svg>
                 </a>
                 <a
@@ -684,7 +784,7 @@ const LineChart = () => {
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.40-1.439-1.40z" />
                   </svg>
                 </a>
                 <a
@@ -696,7 +796,7 @@ const LineChart = () => {
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.790-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
                 </a>
               </div>
