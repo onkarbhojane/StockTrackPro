@@ -28,6 +28,7 @@
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9",
     "otplib": "^12.0.1",
+    "razorpay": "^2.9.6",
     "read-excel-file": "^5.8.6",
     "scraperjs": "^1.2.0",
     "smartapi-javascript": "^1.0.27",

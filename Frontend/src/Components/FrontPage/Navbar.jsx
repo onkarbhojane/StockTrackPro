@@ -213,24 +213,24 @@ const Navbar = ({
                   >
                     Calculators
                   </button>
-                  <button
+                  {/* <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
                     onClick={() => navigate("/trading-analysis")}
                   >
                     Trading Analysis
-                  </button>
-                  <button
+                  </button> */}
+                  {/* <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
                     onClick={() => navigate("/paper-trading")}
                   >
                     Paper Trading
-                  </button>
-                  <button
+                  </button> */}
+                  {/* <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
                     onClick={() => navigate("/portfolio-builder")}
                   >
                     Portfolio Builder
-                  </button>
+                  </button> */}
                   <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
                     onClick={() => navigate("/knowledge_center")}

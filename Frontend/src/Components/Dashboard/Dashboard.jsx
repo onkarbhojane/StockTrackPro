@@ -10,6 +10,19 @@ import {
   FaChartLine,
   FaCoins,
   FaToolbox,
+  FaBell,
+  FaSearch,
+  FaWallet,
+  FaPortrait,
+  FaCog,
+  FaSignOutAlt,
+  FaStar,
+  FaRegStar,
+  FaFilter,
+  FaSortAmountDownAlt,
+  FaSortAmountUp,
+  FaExchangeAlt,
+  FaInfoCircle
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,6 +35,7 @@ import {
   Tooltip,
   Legend,
   Filler,
+  BarElement,
 } from "chart.js";
 
 ChartJS.register(
@@ -32,7 +46,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  BarElement
 );
 
 const Dashboard = () => {
@@ -44,6 +59,15 @@ const Dashboard = () => {
   const [topLosers, setTopLosers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [moversLoading, setMoversLoading] = useState(true);
+  const [news, setNews] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
@@ -63,7 +87,43 @@ const Dashboard = () => {
       }
     };
 
+    const fetchNews = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/service/market-news"
+        );
+        setNews(response.data.slice(0, 5)); // Show only 5 latest news items
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      }
+    };
+
+    const fetchWatchlist = async () => {
+      try {
+        const cookieToken = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("token="))
+          ?.split("=")[1];
+        
+        if (cookieToken) {
+          const response = await axios.get(
+            "http://localhost:8080/api/user/watchlist",
+            {
+              headers: {
+                Authorization: `Bearer ${cookieToken}`,
+              },
+            }
+          );
+          setWatchlist(response.data.watchlist || []);
+        }
+      } catch (error) {
+        console.error("Error fetching watchlist:", error);
+      }
+    };
+
     fetchTopMovers();
+    fetchNews();
+    fetchWatchlist();
   }, []);
 
   useEffect(() => {
@@ -143,6 +203,52 @@ const Dashboard = () => {
     fetchMarketData();
   }, [dispatch, navigate]);
 
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (query.length > 2) {
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/service/search?q=${query}`
+        );
+        setSearchResults(response.data.slice(0, 5));
+        setShowSearchResults(true);
+      } catch (error) {
+        console.error("Error searching:", error);
+      }
+    } else {
+      setShowSearchResults(false);
+    }
+  };
+
+  const toggleWatchlist = async (symbol) => {
+    try {
+      const cookieToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+      
+      if (cookieToken) {
+        const response = await axios.post(
+          "http://localhost:8080/api/user/watchlist/toggle",
+          { symbol },
+          {
+            headers: {
+              Authorization: `Bearer ${cookieToken}`,
+            },
+          }
+        );
+        
+        if (response.data.isInWatchlist) {
+          setWatchlist([...watchlist, symbol]);
+        } else {
+          setWatchlist(watchlist.filter(item => item !== symbol));
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+    }
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -160,7 +266,12 @@ const Dashboard = () => {
       },
     },
     scales: {
-      x: { grid: { display: false } },
+      x: { 
+        grid: { display: false },
+        ticks: {
+          maxTicksLimit: 6,
+        }
+      },
       y: {
         grid: { color: "#e5e7eb" },
         ticks: { callback: (value) => `₹${value}` },
@@ -183,19 +294,36 @@ const Dashboard = () => {
       icon: <FaChartLine className="text-blue-600 text-xl" />,
       description: "AI-powered stock price predictions and trend analysis",
       route: "/ai-predictions",
+      color: "bg-blue-500",
     },
     {
       name: "Portfolio Builder",
-      icon: <FaToolbox className="text-blue-600 text-xl" />,
+      icon: <FaToolbox className="text-green-600 text-xl" />,
       description: "Build and optimize your investment portfolio",
       route: "/portfolio-builder",
+      color: "bg-green-500",
     },
     {
       name: "Options Calculator",
-      icon: <FaCoins className="text-blue-600 text-xl" />,
+      icon: <FaCoins className="text-purple-600 text-xl" />,
       description: "Advanced options trading calculator with Greeks",
       route: "/options-calculator",
+      color: "bg-purple-500",
     },
+    {
+      name: "Screener",
+      icon: <FaFilter className="text-orange-600 text-xl" />,
+      description: "Filter stocks based on technical and fundamental criteria",
+      route: "/stock-screener",
+      color: "bg-orange-500",
+    },
+  ];
+
+  const quickActions = [
+    { name: "Buy", color: "bg-green-600 hover:bg-green-700" },
+    { name: "Sell", color: "bg-red-600 hover:bg-red-700" },
+    { name: "Deposit", color: "bg-blue-600 hover:bg-blue-700" },
+    { name: "Withdraw", color: "bg-gray-600 hover:bg-gray-700" },
   ];
 
   return (
@@ -208,13 +336,42 @@ const Dashboard = () => {
         display="static"
         chatlogo={true}
         searchPlaceholder="Search stocks, indices..."
+        onSearchChange={handleSearch}
       />
 
+      {/* Search Results Dropdown */}
+      {showSearchResults && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 w-96 bg-white shadow-xl rounded-md z-50 border border-gray-200">
+          {searchResults.map((result, index) => (
+            <div
+              key={index}
+              className="p-3 flex justify-between items-center hover:bg-gray-100 cursor-pointer border-b border-gray-100"
+              onClick={() => {
+                navigate(`/stock/${result.symbol}`);
+                setShowSearchResults(false);
+              }}
+            >
+              <div>
+                <div className="font-medium">{result.symbol}</div>
+                <div className="text-sm text-gray-500">{result.name}</div>
+              </div>
+              <div className="text-right">
+                <div className="font-medium">₹{result.price?.toLocaleString('en-IN')}</div>
+                <div className={`text-sm ${result.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {result.change >= 0 ? '+' : ''}{result.change}%
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+        {/* Header with Greeting */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Market Overview
+              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}{user?.Name ? `, ${user.Name}` : ''}!
             </h1>
             <p className="text-gray-500">
               {new Date().toLocaleDateString("en-US", {
@@ -225,8 +382,88 @@ const Dashboard = () => {
               })}
             </p>
           </div>
+          <div className="flex gap-2">
+            {quickActions.map((action, index) => (
+              <button
+                key={index}
+                className={`px-4 py-2 rounded-md text-sm font-medium text-white ${action.color} transition-colors`}
+              >
+                {action.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm opacity-80">Portfolio Value</p>
+                <p className="text-2xl font-bold mt-1">
+                  ₹{user?.TotalAmount?.toLocaleString("en-IN") || '0'}
+                </p>
+              </div>
+              <FaWallet className="text-2xl opacity-80" />
+            </div>
+            <div className="mt-2 text-sm flex items-center">
+              <FaArrowUp className="mr-1" />
+              <span>2.5% today</span>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm opacity-80">Net Profit</p>
+                <p className="text-2xl font-bold mt-1">
+                  ₹{user?.netProfit?.toLocaleString("en-IN") || '0'}
+                </p>
+              </div>
+              <FaChartLine className="text-2xl opacity-80" />
+            </div>
+            <div className="mt-2 text-sm flex items-center">
+              <FaArrowUp className="mr-1" />
+              <span>5.2% overall</span>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm opacity-80">Cash Balance</p>
+                <p className="text-2xl font-bold mt-1">
+                  ₹{user?.WalletAmount?.toLocaleString("en-IN") || '0'}
+                </p>
+              </div>
+              <FaCoins className="text-2xl opacity-80" />
+            </div>
+            <div className="mt-2 text-sm">
+              <span>Available to trade</span>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm opacity-80">Annual Return</p>
+                <p className="text-2xl font-bold mt-1">
+                  {user?.annualReturn?.toFixed(2) || '0'}%
+                </p>
+              </div>
+              <FaExchangeAlt className="text-2xl opacity-80" />
+            </div>
+            <div className="mt-2 text-sm flex items-center">
+              <FaArrowUp className="mr-1" />
+              <span>+2.3% vs benchmark</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">Market Overview</h2>
           <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
-            {["1D", "1W", "1M", "1Y"].map((range) => (
+            {["1D", "1W", "1M", "1Y", "All"].map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
@@ -242,21 +479,103 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Main Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Market Performance</h2>
-          <div className="h-96">
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Main Chart */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Market Performance</h2>
+              <div className="flex gap-2">
+                <button className="text-sm text-blue-600 font-medium">NIFTY 50</button>
+                <button className="text-sm text-gray-600 font-medium">SENSEX</button>
+                <button className="text-sm text-gray-600 font-medium">NIFTY BANK</button>
               </div>
-            ) : marketData ? (
-              <Line data={marketData} options={chartOptions} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No chart data available
-              </div>
-            )}
+            </div>
+            <div className="h-96">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : marketData ? (
+                <Line data={marketData} options={chartOptions} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  No chart data available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Watchlist Panel */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Watchlist</h2>
+              <button 
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                onClick={() => navigate("/watchlist")}
+              >
+                Manage
+              </button>
+            </div>
+            <div className="space-y-4">
+              {watchlist.length > 0 ? (
+                watchlist.slice(0, 5).map((stock, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                    <div className="flex items-center">
+                      <button 
+                        onClick={() => toggleWatchlist(stock.symbol)}
+                        className="mr-3 text-yellow-500"
+                      >
+                        <FaStar />
+                      </button>
+                      <div>
+                        <div className="font-medium">{stock.symbol}</div>
+                        <div className="text-sm text-gray-500">NSE</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">₹{stock.price?.toLocaleString('en-IN') || 'N/A'}</div>
+                      <div className={`text-sm ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {stock.change >= 0 ? '+' : ''}{stock.change}%
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <div className="mb-2">Your watchlist is empty</div>
+                  <button 
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    onClick={() => navigate("/discover")}
+                  >
+                    Add stocks
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Market News */}
+            <h2 className="text-xl font-semibold mt-8 mb-4">Market News</h2>
+            <div className="space-y-4">
+              {news.length > 0 ? (
+                news.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className="p-3 border border-gray-100 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                    onClick={() => window.open(item.url, '_blank')}
+                  >
+                    <div className="font-medium text-sm mb-1">{item.title}</div>
+                    <div className="text-xs text-gray-500 flex justify-between">
+                      <span>{item.source}</span>
+                      <span>{new Date(item.publishedAt).toLocaleTimeString()}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  No news available
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -279,12 +598,12 @@ const Dashboard = () => {
             indices.map((index, i) => (
               <div
                 key={i}
-                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors cursor-pointer"
+                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-blue-200 transition-colors cursor-pointer group"
                 onClick={() => navigate(`/index/${index.symbol}`)}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-gray-900">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600">
                       {index.name}
                     </h3>
                     <p className="text-2xl font-bold mt-2">{index.value}</p>
@@ -330,11 +649,14 @@ const Dashboard = () => {
         </div>
 
         {/* Top Gainers/Losers Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Top Gainers */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Top Gainers</h2>
+              <h2 className="text-xl font-semibold flex items-center">
+                Top Gainers
+                <FaSortAmountUp className="ml-2 text-green-600" />
+              </h2>
               <button
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                 onClick={() => navigate("/top-movers?type=gainers")}
@@ -364,15 +686,15 @@ const Dashboard = () => {
                   </div>
                 ))
             ) : topGainers.length > 0 ? (
-              topGainers.map((stock, i) => (
+              topGainers.slice(0, 8).map((stock, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-3 border-b last:border-0 hover:bg-gray-50 px-2 rounded transition-colors cursor-pointer"
+                  className="flex items-center justify-between py-3 border-b last:border-0 hover:bg-gray-50 px-2 rounded transition-colors cursor-pointer group"
                   onClick={() => navigate(`/stock/${stock.symbol}`)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <FaChartLine className="text-green-600" />
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
+                      <FaArrowUp className="text-green-600" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{stock.symbol}</h3>
@@ -397,7 +719,10 @@ const Dashboard = () => {
           {/* Top Losers */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Top Losers</h2>
+              <h2 className="text-xl font-semibold flex items-center">
+                Top Losers
+                <FaSortAmountDownAlt className="ml-2 text-red-600" />
+              </h2>
               <button
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                 onClick={() => navigate("/top-movers?type=losers")}
@@ -427,15 +752,15 @@ const Dashboard = () => {
                   </div>
                 ))
             ) : topLosers.length > 0 ? (
-              topLosers.map((stock, i) => (
+              topLosers.slice(0, 8).map((stock, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-3 border-b last:border-0 hover:bg-gray-50 px-2 rounded transition-colors cursor-pointer"
+                  className="flex items-center justify-between py-3 border-b last:border-0 hover:bg-gray-50 px-2 rounded transition-colors cursor-pointer group"
                   onClick={() => navigate(`/stock/${stock.symbol}`)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                      <FaChartLine className="text-red-600 rotate-180" />
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200">
+                      <FaArrowDown className="text-red-600" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{stock.symbol}</h3>
@@ -461,16 +786,18 @@ const Dashboard = () => {
         {/* Trading Tools Section */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
           <h2 className="text-xl font-semibold mb-6">Trading Tools</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {tools.map((tool, i) => (
               <div
                 key={i}
-                className="p-6 border rounded-lg hover:border-blue-500 transition-colors cursor-pointer"
+                className="p-6 border rounded-lg hover:border-blue-500 transition-colors cursor-pointer group"
                 onClick={() => navigate(tool.route)}
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">{tool.icon}</div>
-                  <h3 className="font-semibold">{tool.name}</h3>
+                  <div className={`p-3 ${tool.color} bg-opacity-10 rounded-lg group-hover:bg-opacity-20`}>
+                    {tool.icon}
+                  </div>
+                  <h3 className="font-semibold group-hover:text-blue-600">{tool.name}</h3>
                 </div>
                 <p className="text-gray-500 text-sm">{tool.description}</p>
               </div>
@@ -484,8 +811,8 @@ const Dashboard = () => {
             <h2 className="text-xl font-semibold mb-6">
               Your Portfolio Summary
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-100">
                 <h3 className="text-sm font-medium text-blue-800 mb-2">
                   Total Value
                 </h3>
@@ -495,8 +822,12 @@ const Dashboard = () => {
                     maximumFractionDigits: 2,
                   })}
                 </p>
+                <div className="flex items-center mt-2 text-sm text-blue-700">
+                  <FaArrowUp className="mr-1" />
+                  <span>+2.5% today</span>
+                </div>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg">
+              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-100">
                 <h3 className="text-sm font-medium text-green-800 mb-2">
                   Net Profit
                 </h3>
@@ -506,22 +837,38 @@ const Dashboard = () => {
                     maximumFractionDigits: 2,
                   })}
                 </p>
+                <div className="flex items-center mt-2 text-sm text-green-700">
+                  <FaArrowUp className="mr-1" />
+                  <span>+5.2% overall</span>
+                </div>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-100">
                 <h3 className="text-sm font-medium text-purple-800 mb-2">
                   Annual Return
                 </h3>
                 <p className="text-2xl font-bold text-purple-900">
                   {user.annualReturn?.toFixed(2)}%
                 </p>
+                <div className="flex items-center mt-2 text-sm text-purple-700">
+                  <FaArrowUp className="mr-1" />
+                  <span>+2.3% vs benchmark</span>
+                </div>
               </div>
             </div>
-            <button
-              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              onClick={() => navigate("/portfolio")}
-            >
-              View Full Portfolio
-            </button>
+            <div className="flex gap-4">
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                onClick={() => navigate("/portfolio")}
+              >
+                View Full Portfolio
+              </button>
+              <button
+                className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                onClick={() => navigate("/portfolio/analysis")}
+              >
+                Performance Analysis
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -609,7 +956,7 @@ const Dashboard = () => {
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.40-1.439-1.40z" />
                   </svg>
                 </a>
                 <a

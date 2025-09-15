@@ -7,6 +7,17 @@ import mongoose from "mongoose";
 import MarketData from "../Models/MarketData.models.js";
 import DailyData from "../Models/DailyData.models.js";
 
+/* -------------------- globals -------------------- */
+let ws = null;
+let globalJwt = null;  // store latest JWT for reuse
+let globalFeed = null;
+const aggCache = {};
+const tokenToSymbol = {
+  "3045": "RELIANCE",
+  "1594": "INFY",
+  "1660": "TCS",
+};
+
 /* -------------------- helpers -------------------- */
 function getLocalIP() {
   const nets = networkInterfaces();
@@ -81,6 +92,10 @@ async function login() {
       return;
     }
 
+    // save globally
+    globalJwt = jwtToken;
+    globalFeed = feedToken;
+
     console.log("✅ Login Success");
     startWebSocket({
       jwtToken,
@@ -94,14 +109,6 @@ async function login() {
 }
 
 /* -------------------- websocket + aggregation -------------------- */
-let ws = null;
-const aggCache = {};
-const tokenToSymbol = {
-  "3045": "RELIANCE",
-  "1594": "INFY",
-  "1660": "TCS",
-};
-
 function startWebSocket({ jwtToken, feedToken, clientcode, apiKey }) {
   const wsUrl = "wss://smartapisocket.angelone.in/smart-stream";
 
@@ -170,7 +177,6 @@ function startWebSocket({ jwtToken, feedToken, clientcode, apiKey }) {
   ws.on("error", (err) => console.error("❌ WebSocket error:", err?.message));
 }
 
-console.log("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
 /* -------------------- save loop (1 sec) -------------------- */
 setInterval(async () => {
   const now = Date.now();
@@ -279,5 +285,42 @@ function scheduleMarketHours() {
   }
 }
 
+/* -------------------- Top gainers/losers API -------------------- */
+const TopGainersLosers = async (req, res) => {
+  try {
+    const { type } = req.params; // 'gainers' or 'losers'
+
+    if (!["gainers", "losers"].includes(type)) {
+      return res.status(400).json({ error: "Invalid type. Use 'gainers' or 'losers'." });
+    }
+
+    if (!globalJwt) {
+      return res.status(401).json({ error: "Not logged in. Please wait for login." });
+    }
+
+    const API_KEY = process.env.ANGLE_ONE_API_KEY;
+    const url = "https://apiconnect.angelone.in/rest/secure/angelbroking/marketData/v1/gainersLosers";
+
+    const response = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${globalJwt}`,
+        "X-PrivateKey": API_KEY,
+      },
+      params: {
+        type: type, // "gainers" or "losers"
+      },
+    });
+
+    return res.json(response.data);
+  } catch (err) {
+    console.error("❌ Error fetching Top Gainers/Losers:", err.response?.data || err.message);
+    return res.status(500).json({ error: "Failed to fetch gainers/losers" });
+  }
+};
+
 /* -------------------- run -------------------- */
 scheduleMarketHours();
+
+export { TopGainersLosers };
