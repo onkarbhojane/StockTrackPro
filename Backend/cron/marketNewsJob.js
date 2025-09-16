@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { fetchAndSaveNews } from "../services/News.service.js";
-
+import MarketData from "../Models/MarketData.models.js";
+import { executePendingTransactions } from "../Controllers/Transaction.js";
 const scheduledTimes = ["0 8 * * *", "0 9 * * *", "0 12 * * *", "0 15 * * *", "0 17 * * *", "0 0 * * *"];
 const GainerLossersTimes = [
   "15 9 * * *",
@@ -37,10 +38,18 @@ scheduledTimes.forEach((schedule) => {
   });
 });
 
+
 GainerLossersTimes.forEach((schedule) => {
   cron.schedule(schedule, async () => {
     await fetchAndSaveNews();
   });
 });
 
-
+cron.schedule("*/5 * * * * *", async () => {
+  try {
+    await executePendingTransactions();
+    console.log("🔄 Transaction check cycle completed");
+  } catch (error) {
+    console.error("Cron Error:", error);
+  }
+});

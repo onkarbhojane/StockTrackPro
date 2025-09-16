@@ -106,7 +106,9 @@ const Modal = ({
       );
 
       if (res.status === 200) {
+        console.log("Login successful:", res.data);
         document.cookie = `token=${res.data.token}`;
+        document.cookie = `isLogged=true`;
         dispatch(login({ user: userData, token: res.data.token }));
         navigate("/dashboard");
         close();
@@ -283,6 +285,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
           annualReturn: res.data.user.annualReturn || 0,
         };
         document.cookie = `token=${res.data.token}`;
+        document.cookie = `isLogged=true`;
         dispatch(login({ user: userData, token: res.data.token }));
         navigate("/dashboard");
         close();
@@ -330,7 +333,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
         <div className="flex justify-end">
           <button
             onClick={close}
-            className="text-gray-500 hover:text-gray-700 transition-colors text-2xl"
+            className="text-black hover:text-gray-700 transition-colors text-2xl"
           >
             &times;
           </button>
@@ -353,7 +356,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Verify OTP</h1>
-          <p className="text-gray-600">
+          <p className="text-black">
             We've sent a 6-digit code to {userData.email}
           </p>
         </div>
@@ -369,7 +372,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
                 value={value}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-12 h-12 text-2xl text-center bg-gray-50 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none border border-gray-200"
+                className="w-12 h-12 text-2xl text-center text-black bg-gray-50 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none border border-gray-200"
               />
             ))}
           </div>
@@ -383,7 +386,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
             Verify OTP
           </button>
 
-          <div className="text-center text-gray-600">
+          <div className="text-center text-black">
             {timer > 0 ? (
               `Resend OTP in ${timer}s`
             ) : (

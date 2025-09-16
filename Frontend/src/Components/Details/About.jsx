@@ -1,18 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import profile from "../../assets/user.png";
-import mission from '../../assets/mission.jpg'
+import profile from "../../assets/CEO.png";
+import mission from '../../assets/mission.jpg';
+
 const About = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 text-black">
       {/* Navigation */}
-      <nav className="bg-white shadow-md fixed w-full z-50">
+      <nav className="bg-white/90 backdrop-blur-sm shadow-md fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-8">
             <h1
-              className="text-2xl font-bold text-emerald-600 cursor-pointer"
+              className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent cursor-pointer"
               onClick={() => navigate("/")}
             >
               StockTrack Pro
@@ -22,12 +23,12 @@ const About = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-r from-emerald-50 to-blue-50">
+      <section className="pt-24 pb-16 bg-gradient-to-r from-emerald-50/70 to-blue-50/70">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold text-emerald-600 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent mb-4">
             About StockTrack Pro
           </h1>
-          <p className="text-gray-600 text-xl">
+          <p className="text-gray-600 text-xl max-w-2xl mx-auto">
             Empowering investors with intelligent tools and insights
           </p>
         </div>
@@ -49,17 +50,18 @@ const About = () => {
                 to make informed decisions.
               </p>
               <button
-                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                onClick={() => navigate("/features")}
+                className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                onClick={() => navigate("/Dashboard")}
               >
                 Explore Features
               </button>
             </div>
-            <div className="bg-white p-8 rounded-lg shadow-lg">
+            <div className="bg-white p-2 rounded-xl shadow-lg overflow-hidden h-full">
               <img
                 src={mission}
                 alt="Our Mission"
-                className="rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
+                style={{ minHeight: '300px' }}
               />
             </div>
           </div>
@@ -71,10 +73,10 @@ const About = () => {
             Key Features
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-emerald-600 mb-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-emerald-100">
+              <div className="text-emerald-600 mb-4 bg-emerald-50 w-12 h-12 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-8 h-8"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -94,10 +96,10 @@ const About = () => {
                 Access up-to-the-minute stock prices and market trends.
               </p>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-emerald-600 mb-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-emerald-100">
+              <div className="text-emerald-600 mb-4 bg-emerald-50 w-12 h-12 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-8 h-8"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -117,10 +119,10 @@ const About = () => {
                 Comprehensive tools for portfolio analysis and risk assessment.
               </p>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-              <div className="text-emerald-600 mb-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-emerald-100">
+              <div className="text-emerald-600 mb-4 bg-emerald-50 w-12 h-12 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-8 h-8"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -138,7 +140,8 @@ const About = () => {
               </h3>
               <p className="text-gray-600">
                 Personalized notifications for important market movements.
-              </p>
+              </p>import Dashboard from './../Dashboard/Dashboard';
+
             </div>
           </div>
         </section>
@@ -148,40 +151,30 @@ const About = () => {
           <h2 className="text-3xl font-bold text-emerald-600 mb-8 text-center">
             Meet Our Team
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center bg-white p-6 rounded-lg shadow-lg">
-              <img
-                src={profile}
-                alt="Onkar Bhojane"
-                className="w-32 h-32 rounded-full mx-auto mb-4"
-              />
-              <h4 className="text-lg font-semibold">Onkar Bhojane</h4>
-              <p className="text-gray-600">CEO & Founder</p>
-            </div>
-            <div className="text-center bg-white p-6 rounded-lg shadow-lg">
-              <img
-                src={profile}
-                alt="Dattatray Bhojane"
-                className="w-32 h-32 rounded-full mx-auto mb-4"
-              />
-              <h4 className="text-lg font-semibold">Dattatray Bhojane</h4>
-              <p className="text-gray-600">Lead Analyst</p>
-            </div>
-            <div className="text-center bg-white p-6 rounded-lg shadow-lg">
-              <img
-                src={profile}
-                alt="Suraj Bhojane"
-                className="w-32 h-32 rounded-full mx-auto mb-4"
-              />
-              <h4 className="text-lg font-semibold">Suraj Bhojane</h4>
-              <p className="text-gray-600">Tech Lead</p>
+          <div className="flex justify-center">
+            <div className="text-center bg-white p-8 rounded-xl shadow-lg max-w-md border border-emerald-100">
+              <div className="relative inline-block mb-4">
+                <img
+                  src={profile}
+                  alt="Onkar Bhojane"
+                  className="w-40 h-40 rounded-full mx-auto object-cover border-4 border-emerald-100 shadow-md"
+                />
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  CEO & Founder
+                </div>
+              </div>
+              <h4 className="text-2xl font-semibold text-gray-800 mt-6">Onkar Bhojane</h4>
+              <p className="text-emerald-600 font-medium">CEO & Founder</p>
+              <p className="text-gray-600 mt-4">
+                Leading the vision to democratize investment tools for everyone.
+              </p>
             </div>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-8">
+      <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-200 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-gray-600 mb-2">
             &copy; 2023 StockTrack Pro. All rights reserved.

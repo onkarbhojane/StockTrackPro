@@ -20,11 +20,8 @@ const jwtAuthMiddleware = (req, res, next) => {
             return res.status(401).json({ error: 'Token is missing in Authorization header' });
         }
 
-        console.log(token)
         const decoded = jwt.verify(token, "1234");
         req.userPayload = decoded;
-        console.log(decoded)
-
         next();
     } catch (error) {
         console.error("JWT Verification Failed:", error.message);

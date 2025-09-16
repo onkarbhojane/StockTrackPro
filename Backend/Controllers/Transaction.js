@@ -4,121 +4,167 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
+
+/* ---------------- OTP Verify ---------------- */
 const TransactionVerify = (req, res) => {
-  console.log("OTP sent for transaction verification");
-  console.log(req.body);
   const { email, OTP } = req.body;
+
   const mailOptions = {
     from: "onkar.bhojane22@gmail.com",
     to: email,
-    subject: "OTP for stock buying ",
+    subject: "OTP for stock buying",
     text: `Your OTP is ${OTP}`,
   };
-  console.log(mailOptions);
+
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error("Error sending email: ", error);
-    } else {
-      console.log("Email sent: ", info.response);
+      return res.status(500).json({ message: "Failed to send OTP" });
     }
+    return res.status(200).json({ message: "OTP sent successfully" });
   });
-  res.send("OTP sent successfully");
 };
 
+/* ---------------- Stock Transaction (Queue Orders) ---------------- */
 const StockTransaction = async (req, res) => {
   try {
     const { transaction } = req.body;
     const userId = req.userPayload._id;
 
-    if (!transaction || !transaction.Symbol || !transaction.Quantity || !transaction.type) {
+    if (
+      !transaction ||
+      !transaction.Symbol ||
+      !transaction.Quantity ||
+      !transaction.type ||
+      !transaction.pricePerShare
+    ) {
       return res.status(400).json({ message: "Invalid transaction data" });
     }
 
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (transaction.type.toUpperCase() === "BUY") {
-      if (user.WalletAmount < transaction.estimatedCost) {
-        return res.status(400).json({ message: "Insufficient funds" });
-      }
-
-      user.WalletAmount -= transaction.estimatedCost;
-
-      const existingStock = user.Stocks.find(
-        stock => stock.symbol === transaction.Symbol
-      );
-
-      if (existingStock) {
-        existingStock.quantity += parseInt(transaction.Quantity);
-        existingStock.totalInvested += transaction.estimatedCost;
-        existingStock.avgPrice = existingStock.totalInvested / existingStock.quantity;
-      } else {
-        user.Stocks.push({
-          symbol: transaction.Symbol,
-          quantity: parseInt(transaction.Quantity),
-          avgPrice: transaction.estimatedCost / transaction.Quantity,
-          totalInvested: transaction.estimatedCost
-        });
-      }
-
-    } else if (transaction.type.toUpperCase() === "SELL") {
-      const existingStock = user.Stocks.find(
-        stock => stock.symbol === transaction.Symbol
-      );
-
-      if (!existingStock) {
-        return res.status(400).json({ message: "Stock not found in portfolio" });
-      }
-
-      if (existingStock.quantity < transaction.Quantity) {
-        return res.status(400).json({ message: "Insufficient stock quantity" });
-      }
-
-      user.WalletAmount += transaction.estimatedCost;
-
-      existingStock.quantity -= parseInt(transaction.Quantity);
-      existingStock.totalInvested -= existingStock.avgPrice * transaction.Quantity;
-
-      if (existingStock.quantity <= 0) {
-        user.Stocks = user.Stocks.filter(
-          stock => stock.symbol !== transaction.Symbol
-        );
-      }
-    } else {
-      return res.status(400).json({ message: "Invalid transaction type" });
-    }
-
+    // Add to pending transactions queue
     user.Transactions.push({
       symbol: transaction.Symbol,
       quantity: transaction.Quantity,
-      price: transaction.avgPrice || (transaction.estimatedCost / transaction.Quantity),
-      type: transaction.type.toUpperCase()
+      EntryPrice:
+        transaction.type.toUpperCase() === "BUY"
+          ? transaction.pricePerShare
+          : null,
+      ExitPrice:
+        transaction.type.toUpperCase() === "SELL"
+          ? transaction.pricePerShare
+          : null,
+      type: transaction.type.toUpperCase(),
+      Status: "Pending",
     });
 
     await user.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       success: true,
-      message: "Transaction completed successfully",
-      user: {
-        WalletAmount: user.WalletAmount,
-        Stocks: user.Stocks,
-        Transactions: user.Transactions
-      }
+      message:
+        "Transaction queued successfully. It will execute when price hits target.",
+      transactions: user.Transactions,
     });
-
   } catch (error) {
     console.error("Transaction Error:", error);
-    return res.status(500).json({ 
-      success: false, 
-      message: "Transaction failed",
-      error: error.message 
-    });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Transaction failed",
+        error: error.message,
+      });
   }
 };
 
+/* ---------------- Execute Pending Transactions ---------------- */
+const executePendingTransactions = async () => {
+  try {
+    // Find all users with pending transactions
+    const users = await User.find({ "Transactions.Status": "Pending" });
+
+    for (let user of users) {
+      let updated = false;
+
+      for (let txn of user.Transactions) {
+        if (txn.Status !== "Pending") continue;
+
+        // Fetch latest market price for the symbol
+        const latestData = await MarketData.findOne({ Symbol: txn.symbol })
+          .sort({ Date: -1 })
+          .limit(1);
+
+        if (!latestData) continue;
+
+        const currentPrice = latestData.Close;
+
+        /* ---- BUY ---- */
+        if (txn.type === "BUY" && currentPrice <= txn.EntryPrice) {
+          const cost = txn.EntryPrice * txn.quantity;
+
+          if (user.WalletAmount >= cost) {
+            user.WalletAmount -= cost;
+
+            const existingStock = user.Stocks.find(
+              (s) => s.symbol === txn.symbol
+            );
+
+            if (existingStock) {
+              existingStock.quantity += txn.quantity;
+              existingStock.totalInvested += cost;
+              existingStock.avgPrice =
+                existingStock.totalInvested / existingStock.quantity;
+            } else {
+              user.Stocks.push({
+                symbol: txn.symbol,
+                quantity: txn.quantity,
+                avgPrice: txn.EntryPrice,
+                totalInvested: cost,
+              });
+            }
+
+            txn.Status = "Executed";
+            updated = true;
+            console.log(
+              `✅ BUY Executed for ${user.EmailID}: ${txn.quantity} ${txn.symbol} @ ${txn.EntryPrice}`
+            );
+          }
+        }
+
+        /* ---- SELL ---- */
+        if (txn.type === "SELL" && currentPrice >= txn.ExitPrice) {
+          const stock = user.Stocks.find((s) => s.symbol === txn.symbol);
+
+          if (stock && stock.quantity >= txn.quantity) {
+            const revenue = txn.ExitPrice * txn.quantity;
+            user.WalletAmount += revenue;
+
+            stock.quantity -= txn.quantity;
+            stock.totalInvested -= stock.avgPrice * txn.quantity;
+
+            if (stock.quantity <= 0) {
+              user.Stocks = user.Stocks.filter((s) => s.symbol !== txn.symbol);
+            }
+
+            txn.Status = "Executed";
+            updated = true;
+            console.log(
+              `✅ SELL Executed for ${user.EmailID}: ${txn.quantity} ${txn.symbol} @ ${txn.ExitPrice}`
+            );
+          }
+        }
+      }
+
+      if (updated) await user.save();
+    }
+  } catch (error) {
+    console.error("Execution Error:", error);
+  }
+};
+/* ---------------- Razorpay Setup ---------------- */
 const razorpay = new Razorpay({
   key_id: process.env.TEST_KEY_ID,
   key_secret: process.env.TEST_KEY_SECRET,
@@ -126,11 +172,9 @@ const razorpay = new Razorpay({
 
 const create_order = async (req, res) => {
   try {
-    console.log("creating order");
     const { amount, currency } = req.body;
-    console.log(process.env.TEST_KEY_ID, process.env.TEST_KEY_SECRET);
     const options = {
-      amount: amount * 100, 
+      amount: amount * 100,
       currency,
       receipt: `receipt_${Math.random() * 1000}`,
     };
@@ -138,7 +182,6 @@ const create_order = async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.json({ success: true, order });
   } catch (error) {
-    console.log("errror, ", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -160,6 +203,7 @@ const paymentVerify = async (req, res) => {
       .createHmac("sha256", process.env.TEST_KEY_SECRET)
       .update(body)
       .digest("hex");
+
     if (expectedSignature === razorpay_signature) {
       return res
         .status(200)
@@ -177,4 +221,9 @@ const paymentVerify = async (req, res) => {
 };
 
 export default TransactionVerify;
-export { StockTransaction, create_order, paymentVerify };
+export {
+  StockTransaction,
+  create_order,
+  paymentVerify,
+  executePendingTransactions,
+};

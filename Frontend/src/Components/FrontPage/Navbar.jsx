@@ -15,7 +15,8 @@ const Navbar = ({
   display = "fixed",
   chatlogo = true,
   searchPlaceholder = "Search stocks...",
-}) => {   
+}) => {
+  const user = useSelector((state) => state.Auth.user);
   const [searchModal, setSearchModal] = useState(false);
   const [isModal, setIsModal] = useState(false);
   const [isModalChat, setIsModalChat] = useState(false);
@@ -88,15 +89,23 @@ const Navbar = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
+  function getCookie(name) {
+    const value = `; ${document.cookie}`; // Add ; at start to simplify matching
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return null; // Cookie not found
+  }
   return (
     <>
       <nav className={`bg-white shadow-lg ${display} w-full z-50`}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-8 flex-1">
-            <h1 
+            <h1
               className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent cursor-pointer"
-              onClick={() => navigate("/")}
+              onClick={() => {
+                if(getCookie("isLogged")) navigate("/dashboard");
+                else navigate("/");
+              }}
             >
               StockTrack Pro
             </h1>
@@ -199,10 +208,10 @@ const Navbar = ({
                   </button>
                   <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
-                    onClick={() =>{
-                      if(state) {
-                        navigate("/AlgoTrade")
-                      }else handleModal("auth", true)
+                    onClick={() => {
+                      if (state) {
+                        navigate("/AlgoTrade");
+                      } else handleModal("auth", true);
                     }}
                   >
                     Algo Trades
@@ -265,7 +274,7 @@ const Navbar = ({
             )}
 
             {/* Profile Dropdown */}
-            {state ? (
+            {getCookie("isLogged") ? (
               <div className="relative" ref={profileRef}>
                 <button
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-50 shadow-sm hover:shadow-md"
@@ -279,14 +288,20 @@ const Navbar = ({
                     />
                     <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-emerald-500"></span>
                   </div>
-                  <span className="text-gray-700 font-medium">{userData.name}</span>
+                  <span className="text-gray-700 font-medium">
+                    {userData.name}
+                  </span>
                 </button>
 
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 border border-gray-200 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{userData.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{userData.email}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.Name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.EmailID}
+                      </p>
                     </div>
                     <button
                       className={`block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 ${
@@ -317,6 +332,7 @@ const Navbar = ({
                       onClick={() => {
                         dispatch(logout());
                         document.cookie = "token=";
+                        document.cookie = "isLogged=";
                         navigate("/");
                         setIsProfileOpen(false);
                       }}
@@ -378,7 +394,7 @@ const Navbar = ({
                   >
                     Help Center
                   </button>
-                  <button
+                  {/* <button
                     className="block px-4 py-2 text-sm w-full text-left hover:bg-gray-50 text-gray-700 transition-colors"
                     onClick={() => {
                       navigate("/documentation");
@@ -386,7 +402,7 @@ const Navbar = ({
                     }}
                   >
                     Documentation
-                  </button>
+                  </button> */}
                 </div>
               )}
             </div>

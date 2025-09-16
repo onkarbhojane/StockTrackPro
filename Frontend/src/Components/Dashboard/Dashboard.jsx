@@ -22,8 +22,9 @@ import {
   FaSortAmountDownAlt,
   FaSortAmountUp,
   FaExchangeAlt,
-  FaInfoCircle
+  FaInfoCircle,
 } from "react-icons/fa";
+import { FaGraduationCap } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
   Chart as ChartJS,
@@ -67,7 +68,7 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.Auth.user);
@@ -104,7 +105,7 @@ const Dashboard = () => {
           .split("; ")
           .find((row) => row.startsWith("token="))
           ?.split("=")[1];
-        
+
         if (cookieToken) {
           const response = await axios.get(
             "http://localhost:8080/api/user/watchlist",
@@ -114,12 +115,14 @@ const Dashboard = () => {
               },
             }
           );
+          console.log(response.data.watchlist,"ppppppppppppppppppppp");
           setWatchlist(response.data.watchlist || []);
         }
       } catch (error) {
         console.error("Error fetching watchlist:", error);
       }
     };
+    
 
     fetchTopMovers();
     fetchNews();
@@ -144,6 +147,7 @@ const Dashboard = () => {
               },
             }
           );
+          console.log(response.data.data);
 
           const userData = {
             Name: response.data.data.Name || "",
@@ -226,7 +230,7 @@ const Dashboard = () => {
         .split("; ")
         .find((row) => row.startsWith("token="))
         ?.split("=")[1];
-      
+
       if (cookieToken) {
         const response = await axios.post(
           "http://localhost:8080/api/user/watchlist/toggle",
@@ -237,11 +241,11 @@ const Dashboard = () => {
             },
           }
         );
-        
+
         if (response.data.isInWatchlist) {
           setWatchlist([...watchlist, symbol]);
         } else {
-          setWatchlist(watchlist.filter(item => item !== symbol));
+          setWatchlist(watchlist.filter((item) => item !== symbol));
         }
       }
     } catch (error) {
@@ -266,11 +270,11 @@ const Dashboard = () => {
       },
     },
     scales: {
-      x: { 
+      x: {
         grid: { display: false },
         ticks: {
           maxTicksLimit: 6,
-        }
+        },
       },
       y: {
         grid: { color: "#e5e7eb" },
@@ -297,33 +301,31 @@ const Dashboard = () => {
       color: "bg-blue-500",
     },
     {
-      name: "Portfolio Builder",
-      icon: <FaToolbox className="text-green-600 text-xl" />,
-      description: "Build and optimize your investment portfolio",
-      route: "/portfolio-builder",
-      color: "bg-green-500",
-    },
-    {
-      name: "Options Calculator",
+      name: "Advance Calculator",
       icon: <FaCoins className="text-purple-600 text-xl" />,
-      description: "Advanced options trading calculator with Greeks",
-      route: "/options-calculator",
+      description: "Advanced trading calculator with Greeks",
+      route: "/calculators",
       color: "bg-purple-500",
     },
     {
       name: "Screener",
       icon: <FaFilter className="text-orange-600 text-xl" />,
       description: "Filter stocks based on technical and fundamental criteria",
-      route: "/stock-screener",
+      route: "/AllStocks",
       color: "bg-orange-500",
+    },
+    {
+      name: "Learning Courses",
+      icon: <FaGraduationCap className="text-green-600 text-xl" />,
+      description: "Learn trading, investing, and market strategies",
+      route: "/knowledge_center",
+      color: "bg-green-500",
     },
   ];
 
   const quickActions = [
     { name: "Buy", color: "bg-green-600 hover:bg-green-700" },
     { name: "Sell", color: "bg-red-600 hover:bg-red-700" },
-    { name: "Deposit", color: "bg-blue-600 hover:bg-blue-700" },
-    { name: "Withdraw", color: "bg-gray-600 hover:bg-gray-700" },
   ];
 
   return (
@@ -356,9 +358,16 @@ const Dashboard = () => {
                 <div className="text-sm text-gray-500">{result.name}</div>
               </div>
               <div className="text-right">
-                <div className="font-medium">₹{result.price?.toLocaleString('en-IN')}</div>
-                <div className={`text-sm ${result.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {result.change >= 0 ? '+' : ''}{result.change}%
+                <div className="font-medium">
+                  ₹{result.price?.toLocaleString("en-IN")}
+                </div>
+                <div
+                  className={`text-sm ${
+                    result.change >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {result.change >= 0 ? "+" : ""}
+                  {result.change}%
                 </div>
               </div>
             </div>
@@ -371,7 +380,13 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'}{user?.Name ? `, ${user.Name}` : ''}!
+              Good{" "}
+              {new Date().getHours() < 12
+                ? "Morning"
+                : new Date().getHours() < 17
+                ? "Afternoon"
+                : "Evening"}
+              {user?.Name ? `, ${user.Name}` : ""}!
             </h1>
             <p className="text-gray-500">
               {new Date().toLocaleDateString("en-US", {
@@ -385,6 +400,10 @@ const Dashboard = () => {
           <div className="flex gap-2">
             {quickActions.map((action, index) => (
               <button
+                onClick={() => {
+                  if (action.name === "Buy") navigate("/AllStocks");
+                  else navigate("/user/profile");
+                }}
                 key={index}
                 className={`px-4 py-2 rounded-md text-sm font-medium text-white ${action.color} transition-colors`}
               >
@@ -401,39 +420,48 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm opacity-80">Portfolio Value</p>
                 <p className="text-2xl font-bold mt-1">
-                  ₹{user?.TotalAmount?.toLocaleString("en-IN") || '0'}
+                  ₹{user?.TotalAmount?.toLocaleString("en-IN") || "0"}
                 </p>
               </div>
               <FaWallet className="text-2xl opacity-80" />
             </div>
-            <div className="mt-2 text-sm flex items-center">
-              <FaArrowUp className="mr-1" />
-              <span>2.5% today</span>
-            </div>
           </div>
-          
+
           <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl shadow-sm">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm opacity-80">Net Profit</p>
                 <p className="text-2xl font-bold mt-1">
-                  ₹{user?.netProfit?.toLocaleString("en-IN") || '0'}
+                  ₹
+                  {(user?.WalletAmount - user?.TotalAmount)?.toLocaleString(
+                    "en-IN"
+                  ) || "0"}
                 </p>
               </div>
               <FaChartLine className="text-2xl opacity-80" />
             </div>
             <div className="mt-2 text-sm flex items-center">
-              <FaArrowUp className="mr-1" />
-              <span>5.2% overall</span>
+              {user?.WalletAmount - user?.TotalAmount >= 0 ? (
+                <FaArrowUp className="mr-1" />
+              ) : (
+                <FaArrowDown className="mr-1" />
+              )}
+              <span>
+                {(
+                  ((user?.WalletAmount - user?.TotalAmount) * 100) /
+                  user?.TotalAmount
+                ).toFixed(2)}
+                % overall
+              </span>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-sm">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm opacity-80">Cash Balance</p>
                 <p className="text-2xl font-bold mt-1">
-                  ₹{user?.WalletAmount?.toLocaleString("en-IN") || '0'}
+                  ₹{user?.WalletAmount?.toLocaleString("en-IN") || "0"}
                 </p>
               </div>
               <FaCoins className="text-2xl opacity-80" />
@@ -442,13 +470,13 @@ const Dashboard = () => {
               <span>Available to trade</span>
             </div>
           </div>
-          
+
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-sm">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm opacity-80">Annual Return</p>
                 <p className="text-2xl font-bold mt-1">
-                  {user?.annualReturn?.toFixed(2) || '0'}%
+                  {user?.annualReturn?.toFixed(2) || "0"}%
                 </p>
               </div>
               <FaExchangeAlt className="text-2xl opacity-80" />
@@ -485,9 +513,15 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Market Performance</h2>
               <div className="flex gap-2">
-                <button className="text-sm text-blue-600 font-medium">NIFTY 50</button>
-                <button className="text-sm text-gray-600 font-medium">SENSEX</button>
-                <button className="text-sm text-gray-600 font-medium">NIFTY BANK</button>
+                <button className="text-sm text-blue-600 font-medium">
+                  NIFTY 50
+                </button>
+                <button className="text-sm text-gray-600 font-medium">
+                  SENSEX
+                </button>
+                <button className="text-sm text-gray-600 font-medium">
+                  NIFTY BANK
+                </button>
               </div>
             </div>
             <div className="h-96">
@@ -509,9 +543,9 @@ const Dashboard = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Watchlist</h2>
-              <button 
+              <button
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                onClick={() => navigate("/watchlist")}
+                onClick={() => navigate("/AllStocks")}
               >
                 Manage
               </button>
@@ -519,23 +553,34 @@ const Dashboard = () => {
             <div className="space-y-4">
               {watchlist.length > 0 ? (
                 watchlist.slice(0, 5).map((stock, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                  <div
+                  onClick={() => navigate(`/stock/${stock.symbol}`) }
+                    key={index}
+                    className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                  >
                     <div className="flex items-center">
-                      <button 
+                      <button
                         onClick={() => toggleWatchlist(stock.symbol)}
                         className="mr-3 text-yellow-500"
                       >
                         <FaStar />
                       </button>
                       <div>
-                        <div className="font-medium">{stock.symbol}</div>
+                        <div className="font-medium">{stock.companyName}</div>
                         <div className="text-sm text-gray-500">NSE</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">₹{stock.price?.toLocaleString('en-IN') || 'N/A'}</div>
-                      <div className={`text-sm ${stock.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {stock.change >= 0 ? '+' : ''}{stock.change}%
+                      <div className="font-medium">
+                        ₹{stock.price?.toLocaleString("en-IN") || "N/A"}
+                      </div>
+                      <div
+                        className={`text-sm ${
+                          stock.change >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {stock.change >= 0 ? "+" : ""}
+                        {stock.change}%
                       </div>
                     </div>
                   </div>
@@ -543,30 +588,29 @@ const Dashboard = () => {
               ) : (
                 <div className="text-center py-6 text-gray-500">
                   <div className="mb-2">Your watchlist is empty</div>
-                  <button 
+                  <button
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    onClick={() => navigate("/discover")}
+                    onClick={() => navigate("/AllStocks")}
                   >
                     Add stocks
                   </button>
                 </div>
               )}
             </div>
-
-            {/* Market News */}
-            <h2 className="text-xl font-semibold mt-8 mb-4">Market News</h2>
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {news.length > 0 ? (
                 news.map((item, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="p-3 border border-gray-100 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
-                    onClick={() => window.open(item.url, '_blank')}
+                    onClick={() => window.open(item.url, "_blank")}
                   >
                     <div className="font-medium text-sm mb-1">{item.title}</div>
                     <div className="text-xs text-gray-500 flex justify-between">
                       <span>{item.source}</span>
-                      <span>{new Date(item.publishedAt).toLocaleTimeString()}</span>
+                      <span>
+                        {new Date(item.publishedAt).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                 ))
@@ -575,7 +619,7 @@ const Dashboard = () => {
                   No news available
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -702,7 +746,9 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">₹{stock.ltp?.toLocaleString('en-IN') || 'N/A'}</p>
+                    <p className="font-semibold">
+                      ₹{stock.ltp?.toLocaleString("en-IN") || "N/A"}
+                    </p>
                     <span className="text-green-600 flex items-center justify-end gap-1 text-sm font-medium">
                       <FaArrowUp /> {stock.perChange?.toFixed(2)}%
                     </span>
@@ -768,7 +814,9 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">₹{stock.ltp?.toLocaleString('en-IN') || 'N/A'}</p>
+                    <p className="font-semibold">
+                      ₹{stock.ltp?.toLocaleString("en-IN") || "N/A"}
+                    </p>
                     <span className="text-red-600 flex items-center justify-end gap-1 text-sm font-medium">
                       <FaArrowDown /> {Math.abs(stock.perChange)?.toFixed(2)}%
                     </span>
@@ -794,10 +842,14 @@ const Dashboard = () => {
                 onClick={() => navigate(tool.route)}
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <div className={`p-3 ${tool.color} bg-opacity-10 rounded-lg group-hover:bg-opacity-20`}>
+                  <div
+                    className={`p-3 ${tool.color} bg-opacity-10 rounded-lg group-hover:bg-opacity-20`}
+                  >
                     {tool.icon}
                   </div>
-                  <h3 className="font-semibold group-hover:text-blue-600">{tool.name}</h3>
+                  <h3 className="font-semibold group-hover:text-blue-600">
+                    {tool.name}
+                  </h3>
                 </div>
                 <p className="text-gray-500 text-sm">{tool.description}</p>
               </div>
@@ -817,7 +869,8 @@ const Dashboard = () => {
                   Total Value
                 </h3>
                 <p className="text-2xl font-bold text-blue-900">
-                  ₹{user.TotalAmount?.toLocaleString("en-IN", {
+                  ₹
+                  {user.TotalAmount?.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -832,7 +885,8 @@ const Dashboard = () => {
                   Net Profit
                 </h3>
                 <p className="text-2xl font-bold text-green-900">
-                  ₹{user.netProfit?.toLocaleString("en-IN", {
+                  ₹
+                  {user.netProfit?.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

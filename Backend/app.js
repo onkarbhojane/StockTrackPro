@@ -7,6 +7,7 @@ import './Controllers/Auth.js'
 import './cron/marketNewsJob.js';
 import newsRoutes from "./Routes/News.routes.js"
 import MarketDataRouter from "./Routes/MarketData.routes.js";
+// import './Utils/storeAllStocksDB.js'
 // import './'
 import './services/LiveData.js'
 conn();

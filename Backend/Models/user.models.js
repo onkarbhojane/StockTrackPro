@@ -29,7 +29,7 @@ const UserSchema = new mongoose.Schema({
   Transactions: [TransactionSchema],
   SavedNews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'News' }],
   Books: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
-  Watchlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stock' }],
+  Watchlist: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stock' }], default: [] }, // <-- default added
   PremiumPurchase: {
     isPremium: { type: Boolean, default: false },
     purchaseDate: { type: Date, default: Date.now },
@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema({
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
     progress: { type: Number, default: 0 },
     completed: { type: Boolean, default: false }
-  }]
+  }],
 });
 
 const User = mongoose.model('User', UserSchema);

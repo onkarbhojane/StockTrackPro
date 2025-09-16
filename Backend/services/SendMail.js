@@ -7,6 +7,8 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
+console.log(process.env.EMAIL_USER,process.env.EMAIL_PASS);
+console.log("ansnlcjknlkdsjnclkj");
 
 const sendMail=async (req, res) => {
     const mailOptions = {

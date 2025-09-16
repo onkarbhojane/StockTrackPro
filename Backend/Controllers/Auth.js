@@ -15,9 +15,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    const token = jwt.sign({ _id: data._id,email: data.EmailID }, "1234", {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign({ _id: data._id,email: data.EmailID }, "1234");
 
     console.log("Generated Token:", token);
     res.status(200).json({ message: "Login successful", token });
