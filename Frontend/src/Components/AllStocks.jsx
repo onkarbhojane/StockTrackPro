@@ -67,8 +67,8 @@ const AllStocks = () => {
   const fetchFilterOptions = async () => {
     try {
       const [sectorsRes, industriesRes] = await Promise.all([
-        axios.get("https://stock-profile-tracker-1.onrender.com/service/stocks/sectors"),
-        axios.get("https://stock-profile-tracker-1.onrender.com/service/stocks/industries"),
+        axios.get("https://stocktrackpro-2.onrender.com/service/stocks/sectors"),
+        axios.get("https://stocktrackpro-2.onrender.com/service/stocks/industries"),
       ]);
 
       if (sectorsRes.data.success) setSectors(sectorsRes.data.sectors);
@@ -121,7 +121,7 @@ const AllStocks = () => {
       });
 
       const res = await axios.get(
-        `https://stock-profile-tracker-1.onrender.com/service/stocks/filter?${params}`
+        `https://stocktrackpro-2.onrender.com/service/stocks/filter?${params}`
       );
 
       if (res.data.success) {
@@ -144,7 +144,7 @@ const AllStocks = () => {
   const fetchStockDetails = async (symbol) => {
     try {
       const res = await axios.get(
-        `https://stock-profile-tracker-1.onrender.com/service/stocks/${symbol}`
+        `https://stocktrackpro-2.onrender.com/service/stocks/${symbol}`
       );
 
       if (res.data.success) {
@@ -171,7 +171,7 @@ const AllStocks = () => {
 
     try {
       const res = await axios.post(
-        "https://stock-profile-tracker-1.onrender.com/service/stocks/refresh",
+        "https://stocktrackpro-2.onrender.com/service/stocks/refresh",
         {
           symbols: watchlist,
         }
@@ -212,7 +212,7 @@ const AllStocks = () => {
   const storeWatchList = async () => {
     try {
       const resp = await axios.patch(
-        "https://stock-profile-tracker-1.onrender.com/service/stocks/watchlist",
+        "https://stocktrackpro-2.onrender.com/service/stocks/watchlist",
         { watchlist }, // watchlist is an array
         {
           headers: {

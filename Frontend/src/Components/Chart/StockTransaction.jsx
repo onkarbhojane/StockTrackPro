@@ -38,7 +38,7 @@ const StockTransaction = () => {
 
       try {
         await axios.post(
-          "https://stock-profile-tracker-1.onrender.com/stock/Transaction",
+          "https://stocktrackpro-2.onrender.com/stock/Transaction",
           { transaction },
           {
             headers: {

@@ -10,7 +10,7 @@ const StockNews = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          "https://stock-profile-tracker-1.onrender.com/service/stockprice?symbol=IREDA"
+          "https://stocktrackpro-2.onrender.com/service/stockprice?symbol=IREDA"
         );
         console.log(response.data);
         // You might want to update the state with stockPrice here

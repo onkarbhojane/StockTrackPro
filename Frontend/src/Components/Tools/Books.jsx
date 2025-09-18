@@ -6,7 +6,7 @@ const Books = () => {
     try {
       const res = await axios.post(
         `${
-          import.meta.env.VITE_BACKEND_API || "https://stock-profile-tracker-1.onrender.com"
+          import.meta.env.VITE_BACKEND_API || "https://stocktrackpro-2.onrender.com"
         }/api/user/purchase`,
         { item }
       );

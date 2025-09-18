@@ -55,7 +55,7 @@ const Profile = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "https://stock-profile-tracker-1.onrender.com/api/user/profiledata",
+            "https://stocktrackpro-2.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
