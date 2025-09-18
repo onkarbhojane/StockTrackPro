@@ -18,13 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cors());
-
-console.log("Environment Variables:", {
-  ANGLE_ONE_CLIENT_CODE: process.env.ANGLE_ONE_CLIENT_CODE,
-  ANGLE_ONE_API_KEY: process.env.ANGLE_ONE_API_KEY,
-  ANGLE_ONE_TOTP: process.env.ANGLE_ONE_TOTP,
-  ANGLE_ONE_PIN: process.env.ANGLE_ONE_PIN,
-});
+console.log("Environment Variables:", process.env.EMAIL_USER);
 // Correct route usage
 app.use("/api/user", router);
 app.use("/service", router);

@@ -91,7 +91,7 @@ const Dashboard = () => {
     const fetchNews = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/service/market-news"
+          "https://stock-profile-tracker-1.onrender.com/service/market-news"
         );
         setNews(response.data.slice(0, 5)); // Show only 5 latest news items
       } catch (error) {
@@ -108,7 +108,7 @@ const Dashboard = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "http://localhost:8080/api/user/watchlist",
+            "https://stock-profile-tracker-1.onrender.com/api/user/watchlist",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -139,7 +139,7 @@ const Dashboard = () => {
 
         if (cookieToken) {
           const response = await axios.get(
-            "http://localhost:8080/api/user/profiledata",
+            "https://stock-profile-tracker-1.onrender.com/api/user/profiledata",
             {
               headers: {
                 Authorization: `Bearer ${cookieToken}`,
@@ -174,13 +174,13 @@ const Dashboard = () => {
       try {
         // Fetch market indices
         const indicesResponse = await axios.get(
-          "http://localhost:8080/service/market-indices"
+          "https://stock-profile-tracker-1.onrender.com/service/market-indices"
         );
         setIndices(indicesResponse.data);
 
         // Fetch chart data
         const chartResponse = await axios.get(
-          "http://localhost:8080/service/market-chart"
+          "https://stock-profile-tracker-1.onrender.com/service/market-chart"
         );
         setMarketData({
           labels: chartResponse.data.labels,
@@ -212,7 +212,7 @@ const Dashboard = () => {
     if (query.length > 2) {
       try {
         const response = await axios.get(
-          `http://localhost:8080/service/search?q=${query}`
+          `https://stock-profile-tracker-1.onrender.com/service/search?q=${query}`
         );
         setSearchResults(response.data.slice(0, 5));
         setShowSearchResults(true);
@@ -233,7 +233,7 @@ const Dashboard = () => {
 
       if (cookieToken) {
         const response = await axios.post(
-          "http://localhost:8080/api/user/watchlist/toggle",
+          "https://stock-profile-tracker-1.onrender.com/api/user/watchlist/toggle",
           { symbol },
           {
             headers: {

@@ -35,6 +35,9 @@ const OTPVerify = (req, res) => {
     subject: "OTP verification for Stock Market App",
     text: `Your OTP is ${OTP}`,
   };
+  console.log("Email User:", process.env.EMAIL_USER);
+console.log("Email Pass:", process.env.PASS ? "Loaded ✅" : "❌ Not loaded");
+
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error("Error sending email: ", error);

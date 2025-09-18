@@ -101,7 +101,7 @@ const Modal = ({
   const Login = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/user/login",
+        "https://stock-profile-tracker-1.onrender.com/api/user/login",
         userData
       );
 
@@ -253,7 +253,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
 
   const sendOTP = async () => {
     try {
-      const res = await axios.post("http://localhost:8080/api/user/OTPVerify", {
+      const res = await axios.post("https://stock-profile-tracker-1.onrender.com/api/user/OTPVerify", {
         email: userData.email,
         OTP: otp,
       });
@@ -269,7 +269,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
   const registerUser = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/user/register",
+        "https://stock-profile-tracker-1.onrender.com/api/user/register",
         userData
       );
       if (res.status === 200) {
@@ -288,6 +288,7 @@ const OTP = ({ userData, otp, close, setOTP }) => {
         document.cookie = `isLogged=true`;
         dispatch(login({ user: userData, token: res.data.token }));
         navigate("/dashboard");
+        console.log("laksjndclkjsd",res);
         close();
       }
     } catch (error) {

@@ -1,22 +1,14 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  service: "gmail",
   auth: {
-    user: "onkar.bhojane22@gmail.com",
-    pass: process.env.PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.PASS, // must match .env
   },
 });
 
 
 export default transporter;
-
-// transporter.sendMail(mailOptions, (error, info) => {
-//   if (error) {
-//     console.error("Error sending email: ", error);
-//   } else {
-//     console.log("Email sent: ", info.response);
-//   }
-// });

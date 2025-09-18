@@ -25,7 +25,7 @@ const OTP = ({ close }) => {  // Added close prop for modal dismissal
   const sendOTP = async (generatedOTP) => {
     try {
       await axios.post(
-        "http://localhost:8080/stock/verification",
+        "https://stock-profile-tracker-1.onrender.com/stock/verification",
         {
           email: user.EmailID,
           OTP: generatedOTP,

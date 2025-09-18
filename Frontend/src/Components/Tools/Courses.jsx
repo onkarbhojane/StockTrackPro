@@ -42,7 +42,7 @@ const Courses = () => {
 
       // Step 1: Create an order from the backend
       const { data } = await axios.post(
-        "http://localhost:8080/payment/create-order",
+        "https://stock-profile-tracker-1.onrender.com/payment/create-order",
         {
           amount: 100, // Adjust the amount as needed
           currency: "INR",
@@ -73,7 +73,7 @@ const Courses = () => {
         handler: async (response) => {
           // Step 3: Verify payment on the backend
           const verifyRes = await axios.post(
-            "http://localhost:8080/payment/verify-payment",
+            "https://stock-profile-tracker-1.onrender.com/payment/verify-payment",
             response,
             {
               headers: {

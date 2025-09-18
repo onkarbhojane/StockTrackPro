@@ -1,6 +1,6 @@
 import express from 'express';
 import { register, login, OTPVerify, getProfileData } from '../Controllers/Auth.js';
-import sendMail from '../services/SendMail.js';
+// import sendMail from '../services/SendMail.js';
 import {stockname} from '../Utils/StockNames.js'
 import NewsScraper from '../Utils/NewsScraper.js';
 import { CompleteInfo } from '../Utils/NewsScraper.js';
@@ -36,7 +36,7 @@ router.post('/verification',jwtAuthMiddleware,TransactionVerify);
 router.post('/Transaction',jwtAuthMiddleware,StockTransaction);
 router.get("/watchlist",jwtAuthMiddleware,getWatchList);
 //services
-router.get('/sendMail', sendMail);
+// router.get('/sendMail', sendMail);
 router.get('/scrapweb', NewsScraper);
 router.get('/scrapweb/info',CompleteInfo)
 router.get('/stockname', stockname);
